@@ -21,12 +21,17 @@ and extract the following in JSON.
 
 The source text may be:
 - **Interview transcripts** (one or more speakers, Q&A format, conversational language)
+- **Document-based transcripts** (pasted from Word, PDF, or text files — may include 
+  headers, timestamps, page numbers, formatting artifacts, or meeting minutes)
 - SOPs, process documents, or policy manuals
 - A mix of the above
 
-When processing INTERVIEW TRANSCRIPTS, apply these additional rules:
-- Recognize speaker labels (e.g. "Interviewer:", "John:", "Q:", "A:", "Speaker 1:") and 
-  attribute findings to the appropriate interviewee.
+When processing INTERVIEW TRANSCRIPTS (live or from documents), apply these rules:
+- Recognize speaker labels in any format: "Interviewer:", "John:", "Q:", "A:", 
+  "Speaker 1:", "[John Smith]:", timestamps like "[00:12:34]", or document headings 
+  like "Interview with John Smith, Operations Manager".
+- Ignore document artifacts such as page numbers, headers/footers, timestamps, 
+  "[inaudible]", "[crosstalk]", and formatting noise — focus on the substance.
 - Conversational language often contains hedging ("I think", "usually", "sometimes", 
   "it depends"), complaints ("the problem is", "we struggle with"), and workarounds 
   ("what we actually do is"). Treat these as strong signals for risks and inefficiencies.
@@ -37,6 +42,8 @@ When processing INTERVIEW TRANSCRIPTS, apply these additional rules:
 - When multiple interviewees describe the same process differently, flag this as a 
   process inconsistency / standardization gap.
 - Capture the speaker/role in responsible_role when identifiable from the transcript.
+- For multi-interview documents (e.g. several interviews in one file), treat each 
+  interview as a separate source but unify the extracted process into one coherent flow.
 
 CRITICAL: For EVERY item you extract (each process step, risk, inefficiency, change impact, 
 and future/current state entry), you MUST include a "source_references" array. Each reference 
