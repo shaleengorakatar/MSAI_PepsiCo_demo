@@ -17,7 +17,26 @@ logger = logging.getLogger(__name__)
 # Prompt for /analyze-source
 # ---------------------------------------------------------------------------
 SYSTEM_PROMPT = """You are a Control Design Assessment expert. Analyze the provided text 
-(which may come from interviews, SOPs, or process documents) and extract the following in JSON.
+and extract the following in JSON.
+
+The source text may be:
+- **Interview transcripts** (one or more speakers, Q&A format, conversational language)
+- SOPs, process documents, or policy manuals
+- A mix of the above
+
+When processing INTERVIEW TRANSCRIPTS, apply these additional rules:
+- Recognize speaker labels (e.g. "Interviewer:", "John:", "Q:", "A:", "Speaker 1:") and 
+  attribute findings to the appropriate interviewee.
+- Conversational language often contains hedging ("I think", "usually", "sometimes", 
+  "it depends"), complaints ("the problem is", "we struggle with"), and workarounds 
+  ("what we actually do is"). Treat these as strong signals for risks and inefficiencies.
+- Interviewees often describe processes out of order. Reconstruct the logical sequence of 
+  steps from the full transcript, not just the order mentioned.
+- Look for implicit risks hidden in casual remarks (e.g. "we just copy-paste it" → 
+  manual error risk, data integrity risk).
+- When multiple interviewees describe the same process differently, flag this as a 
+  process inconsistency / standardization gap.
+- Capture the speaker/role in responsible_role when identifiable from the transcript.
 
 CRITICAL: For EVERY item you extract (each process step, risk, inefficiency, change impact, 
 and future/current state entry), you MUST include a "source_references" array. Each reference 
