@@ -126,6 +126,46 @@ class CreateBaselineFromAnalysisRequest(BaseModel):
     version: str = Field(default="1.0", description="Baseline version")
 
 
+class CreateVariationFromAnalysisRequest(BaseModel):
+    """Auto-create a Local Market Variation by comparing AI analysis against a Global Baseline."""
+    analysis: AnalyzeSourceResponse = Field(..., description="AI analysis of a local market's interviews/documents")
+    baseline_id: str = Field(..., description="ID of the Global Baseline to compare against")
+    market_code: str = Field(..., description="ISO-3166-1 alpha-2 country code (e.g. 'MX', 'DE')")
+    market_name: str = Field(..., description="Human-readable market name (e.g. 'Mexico', 'Germany')")
+    language: str = Field(default="en", description="Primary language for this market")
+
+
+class ImplementationPlanStep(BaseModel):
+    """A single step in a market-specific implementation plan."""
+    priority: int = Field(..., description="Execution order priority")
+    title: str
+    description: str
+    category: str = Field(..., description="'close_gap' | 'adopt_control' | 'alternative_mitigation' | 'change_management' | 'training'")
+    affected_steps: List[int] = Field(default_factory=list, description="Baseline step numbers affected")
+    effort: str = Field(default="medium", description="'low' | 'medium' | 'high'")
+    timeline: str = Field(default="", description="e.g. '2 weeks', '1 month', 'Q2 2026'")
+    dependencies: List[str] = Field(default_factory=list)
+    source_references: List[SourceReference] = Field(default_factory=list)
+
+
+class ImplementationPlan(BaseModel):
+    """AI-generated implementation strategy for a specific market."""
+    variation_id: str
+    market_code: str
+    market_name: str
+    baseline_id: str
+    baseline_name: str
+    fit_gap_score: float = Field(default=0, ge=0, le=100)
+    executive_summary: str = Field(default="")
+    steps: List[ImplementationPlanStep] = Field(default_factory=list)
+    alternative_mitigations: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Controls that can't be applied and their alternatives"
+    )
+    estimated_total_effort: str = Field(default="")
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 # ---------------------------------------------------------------------------
 # Global Baseline Control & Local Market Variation
 # ---------------------------------------------------------------------------

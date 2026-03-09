@@ -163,6 +163,109 @@ Rules:
 - Return ONLY valid JSON.
 """
 
+# ---------------------------------------------------------------------------
+# Prompt for analysis-to-variation (compare local analysis vs global baseline)
+# ---------------------------------------------------------------------------
+VARIATION_COMPARISON_PROMPT = """You are a Control Design Assessment expert. You are given:
+1. A Global Baseline Control (the corporate standard) with its process steps and risks.
+2. An AI analysis of a local market's actual processes (from interviews/documents).
+
+Compare the local analysis against the global baseline and determine:
+- Which baseline steps are adopted as-is locally
+- Which baseline steps are modified locally (and how)
+- Which baseline steps are missing/removed locally
+- What additional steps the local market has beyond the baseline
+- What additional risks exist in the local market
+
+Return JSON:
+{
+  "overrides": [
+    {
+      "step_number": 1,
+      "field": "description",
+      "value": "how the local market actually does this step",
+      "reason": "why it differs from the global standard"
+    }
+  ],
+  "removed_step_numbers": [3, 5],
+  "removed_reasons": {"3": "reason step 3 doesn't apply", "5": "reason step 5 doesn't apply"},
+  "additional_steps": [
+    {
+      "step_number": 100,
+      "title": "Extra local step title",
+      "description": "What this step does",
+      "responsible_role": "role or null",
+      "is_mandatory": true
+    }
+  ],
+  "additional_risks": [
+    {
+      "description": "Local risk not in the global baseline",
+      "severity": "low" | "medium" | "high" | "critical",
+      "mitigating_controls": ["control 1"]
+    }
+  ],
+  "notes": "Summary of key differences between local market and global baseline"
+}
+
+Rules:
+- Match local analysis steps to baseline steps by semantic similarity, not just titles.
+- If a local step partially matches a baseline step, create an override.
+- If a baseline step has no corresponding local step, add it to removed_step_numbers.
+- If a local step has no corresponding baseline step, add it to additional_steps.
+- Be thorough — capture every deviation.
+- Return ONLY valid JSON.
+"""
+
+# ---------------------------------------------------------------------------
+# Prompt for implementation plan generation
+# ---------------------------------------------------------------------------
+IMPLEMENTATION_PLAN_PROMPT = """You are a Control Design Assessment expert specializing in 
+market-specific implementation strategies. Given:
+1. A Global Baseline Control (the standard)
+2. A Local Market Variation (current state)
+3. A Fit-Gap analysis result (gaps identified)
+
+Generate a prioritized implementation plan to close the gaps. The plan should be 
+practical and tailored to the local market's operational realities.
+
+Return JSON:
+{
+  "executive_summary": "2-3 sentence overview of the implementation strategy",
+  "steps": [
+    {
+      "priority": 1,
+      "title": "Clear action title",
+      "description": "Detailed description of what needs to be done",
+      "category": "close_gap" | "adopt_control" | "alternative_mitigation" | "change_management" | "training",
+      "affected_steps": [1, 2],
+      "effort": "low" | "medium" | "high",
+      "timeline": "e.g. 2 weeks, 1 month",
+      "dependencies": ["step title that must be done first"]
+    }
+  ],
+  "alternative_mitigations": [
+    {
+      "baseline_step_number": 3,
+      "baseline_step_title": "step that can't be applied",
+      "reason_cannot_apply": "why the standard control doesn't work here",
+      "alternative_control": "what to do instead",
+      "residual_risk": "remaining risk after the alternative",
+      "effectiveness": "low" | "medium" | "high"
+    }
+  ],
+  "estimated_total_effort": "e.g. 3-6 months"
+}
+
+Rules:
+- Prioritize closing critical and high-severity gaps first.
+- For removed baseline steps, ALWAYS provide an alternative mitigation approach.
+- Be specific to the market — don't give generic advice.
+- Group related actions where possible.
+- Include change management and training steps.
+- Return ONLY valid JSON.
+"""
+
 
 # ---------------------------------------------------------------------------
 # LLM call helpers
@@ -244,3 +347,39 @@ async def generate_ai_summary(analysis_data: Dict[str, Any], context_label: str 
     except Exception as e:
         logger.warning("AI summary generation failed: %s", e)
         return {"ai_summary": None, "ai_sources": []}
+
+
+async def compare_analysis_to_baseline(
+    analysis_data: Dict[str, Any],
+    baseline_data: Dict[str, Any],
+    market_code: str,
+) -> Dict[str, Any]:
+    """Use LLM to compare a local market's AI analysis against a global baseline."""
+    logger.info("Comparing local analysis to baseline for market: %s", market_code)
+
+    user_content = (
+        f"Market: {market_code}\n\n"
+        f"--- GLOBAL BASELINE ---\n{json.dumps(baseline_data, default=str)}\n\n"
+        f"--- LOCAL MARKET ANALYSIS ---\n{json.dumps(analysis_data, default=str)}"
+    )
+
+    return await _call_llm(VARIATION_COMPARISON_PROMPT, user_content)
+
+
+async def generate_implementation_plan(
+    baseline_data: Dict[str, Any],
+    variation_data: Dict[str, Any],
+    fit_gap_data: Dict[str, Any],
+    market_code: str,
+) -> Dict[str, Any]:
+    """Use LLM to generate a market-specific implementation plan from fit-gap results."""
+    logger.info("Generating implementation plan for market: %s", market_code)
+
+    user_content = (
+        f"Market: {market_code}\n\n"
+        f"--- GLOBAL BASELINE ---\n{json.dumps(baseline_data, default=str)}\n\n"
+        f"--- LOCAL MARKET VARIATION ---\n{json.dumps(variation_data, default=str)}\n\n"
+        f"--- FIT-GAP ANALYSIS ---\n{json.dumps(fit_gap_data, default=str)}"
+    )
+
+    return await _call_llm(IMPLEMENTATION_PLAN_PROMPT, user_content)
