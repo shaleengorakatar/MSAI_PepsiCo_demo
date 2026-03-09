@@ -118,6 +118,14 @@ class AnalyzeSourceResponse(BaseModel):
     analyzed_at: datetime = Field(default_factory=datetime.utcnow)
 
 
+class CreateBaselineFromAnalysisRequest(BaseModel):
+    """Convert AI analysis results into a Global Baseline Control."""
+    analysis: AnalyzeSourceResponse = Field(..., description="The AI analysis output to convert")
+    baseline_name: str = Field(..., min_length=1, description="Name for the new baseline")
+    baseline_description: str = Field(default="", description="Optional description")
+    version: str = Field(default="1.0", description="Baseline version")
+
+
 # ---------------------------------------------------------------------------
 # Global Baseline Control & Local Market Variation
 # ---------------------------------------------------------------------------
