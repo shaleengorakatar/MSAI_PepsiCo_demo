@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import analyze, fit_gap, global_local, monitoring, visualizations
+from app.routers import analyze, fit_gap, global_local, monitoring, upload, visualizations
 
 app = FastAPI(
     title="Control Design Assessment API",
@@ -41,6 +41,7 @@ app.add_middleware(
 # Routers
 # ---------------------------------------------------------------------------
 app.include_router(analyze.router, prefix="/api")
+app.include_router(upload.router, prefix="/api")
 app.include_router(global_local.router, prefix="/api")
 app.include_router(fit_gap.router, prefix="/api")
 app.include_router(monitoring.router, prefix="/api")
