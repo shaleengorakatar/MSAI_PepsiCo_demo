@@ -22,7 +22,7 @@ app = FastAPI(
         "Provides AI-powered process analysis, global/local control management, "
         "fit-gap analysis, and predictive risk monitoring."
     ),
-    version="1.0.0",
+    version="1.0.1",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
