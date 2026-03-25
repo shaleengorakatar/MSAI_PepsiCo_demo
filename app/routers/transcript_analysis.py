@@ -16,6 +16,29 @@ async def get_transcripts():
     return get_available_transcripts()
 
 
+@router.get("/framework")
+async def get_global_framework():
+    """Get the global framework data for frontend display."""
+    from app.main import GLOBAL_FRAMEWORK
+    
+    if not GLOBAL_FRAMEWORK:
+        raise HTTPException(status_code=503, detail="Global framework not loaded")
+    
+    return GLOBAL_FRAMEWORK
+
+
+@router.get("/interviews")
+async def get_all_interviews():
+    """Get all interview transcripts for frontend display."""
+    from app.services.transcript_analyzer import load_mock_interviews
+    
+    interviews = load_mock_interviews()
+    if not interviews:
+        raise HTTPException(status_code=404, detail="Interview data not found")
+    
+    return interviews
+
+
 @router.get("/analyze/{transcript_id}")
 async def analyze_transcript_endpoint(transcript_id: str):
     """
