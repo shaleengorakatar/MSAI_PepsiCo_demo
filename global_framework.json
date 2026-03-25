@@ -1,0 +1,257 @@
+{
+  "process_name": "User Access Management and Provisioning",
+  "process_id": "UAM-001",
+  "version": "v2.1",
+  "effective_date": "2024-01-01",
+  "business_context": "Financial Services - Global Banking Operations",
+  "process_map": {
+    "steps": [
+      {
+        "step_id": "UAM-001",
+        "step_name": "Access Request Initiation",
+        "description": "Manager submits user access request through HRIS system",
+        "responsible_role": "Line Manager",
+        "system": "HRIS",
+        "controls": [
+          "Manager authentication required",
+          "Request form validation",
+          "Business justification required"
+        ],
+        "time_sla": "Immediate"
+      },
+      {
+        "step_id": "UAM-002",
+        "step_name": "Business Approval",
+        "description": "Department head reviews and approves access request",
+        "responsible_role": "Department Head",
+        "system": "Workflow Engine",
+        "controls": [
+          "Segregation of Duties (SoD) check",
+          "Access level validation",
+          "Approval audit trail"
+        ],
+        "time_sla": "24 hours"
+      },
+      {
+        "step_id": "UAM-003",
+        "step_name": "Security Review",
+        "description": "Information Security team performs security assessment",
+        "responsible_role": "Security Analyst",
+        "system": "Security Management System",
+        "controls": [
+          "Background check verification",
+          "Security clearance validation",
+          "Risk assessment"
+        ],
+        "time_sla": "48 hours"
+      },
+      {
+        "step_id": "UAM-004",
+        "step_name": "Automated Provisioning",
+        "description": "System automatically creates user accounts and assigns permissions",
+        "responsible_role": "System Administrator",
+        "system": "Identity Management System",
+        "controls": [
+          "Automated account creation",
+          "Permission assignment based on role matrix",
+          "Password policy enforcement"
+        ],
+        "time_sla": "2 hours"
+      },
+      {
+        "step_id": "UAM-005",
+        "step_name": "Access Verification",
+        "description": "Requester verifies access functionality and permissions",
+        "responsible_role": "End User",
+        "system": "Application Portal",
+        "controls": [
+          "Access testing confirmation",
+          "Permission validation",
+          "User acknowledgment"
+        ],
+        "time_sla": "4 hours"
+      },
+      {
+        "step_id": "UAM-006",
+        "step_name": "Periodic Review",
+        "description": "Quarterly review of all user access rights",
+        "responsible_role": "Access Review Committee",
+        "system": "Access Governance Platform",
+        "controls": [
+          "Access certification",
+          "Exception documentation",
+          "Remediation tracking"
+        ],
+        "time_sla": "Quarterly"
+      }
+    ]
+  },
+  "risk_register": {
+    "risks": [
+      {
+        "risk_id": "RISK-001",
+        "risk_name": "Unauthorized Access to Sensitive Systems",
+        "description": "Users gain access to systems or data beyond their job requirements",
+        "risk_category": "Security",
+        "impact": "High",
+        "likelihood": "Medium",
+        "risk_score": "15",
+        "affected_systems": ["Core Banking", "CRM", "Financial Reporting"],
+        "potential_loss": "$2.5M - $10M"
+      },
+      {
+        "risk_id": "RISK-002",
+        "risk_name": "Segregation of Duties (SoD) Violations",
+        "description": "Single user has conflicting permissions that could enable fraud",
+        "risk_category": "Compliance",
+        "impact": "High",
+        "likelihood": "Medium",
+        "risk_score": "15",
+        "affected_systems": ["Payment Processing", "General Ledger", "Trade Execution"],
+        "potential_loss": "$1M - $5M"
+      },
+      {
+        "risk_id": "RISK-003",
+        "risk_name": "Excessive Access Privileges",
+        "description": "Users retain access rights after role changes or termination",
+        "risk_category": "Operational",
+        "impact": "Medium",
+        "likelihood": "High",
+        "risk_score": "12",
+        "affected_systems": ["All Systems"],
+        "potential_loss": "$500K - $2M"
+      },
+      {
+        "risk_id": "RISK-004",
+        "risk_name": "Manual Override Abuse",
+        "description": "Improper use of emergency access or manual override procedures",
+        "risk_category": "Operational",
+        "impact": "Medium",
+        "likelihood": "Medium",
+        "risk_score": "8",
+        "affected_systems": ["Access Management", "Emergency Systems"],
+        "potential_loss": "$250K - $1M"
+      },
+      {
+        "risk_id": "RISK-005",
+        "risk_name": "Shared Account Usage",
+        "description": "Multiple users sharing generic accounts, eliminating individual accountability",
+        "risk_category": "Security",
+        "impact": "High",
+        "likelihood": "Medium",
+        "risk_score": "15",
+        "affected_systems": ["Legacy Systems", "Administrative Tools"],
+        "potential_loss": "$1M - $3M"
+      }
+    ]
+  },
+  "mitigating_controls": {
+    "manual_controls": [
+      {
+        "control_id": "MC-001",
+        "control_name": "Manager Access Review",
+        "description": "Line managers quarterly review all direct reports' access rights",
+        "control_type": "Detective",
+        "frequency": "Quarterly",
+        "test_procedure": "Sample 10% of users and validate access against job descriptions",
+        "effectiveness": "High"
+      },
+      {
+        "control_id": "MC-002",
+        "control_name": "Exception Approval Process",
+        "description": "Formal approval process for SoD exceptions requiring CIO sign-off",
+        "control_type": "Preventive",
+        "frequency": "As needed",
+        "test_procedure": "Review all exception approvals for proper documentation and justification",
+        "effectiveness": "High"
+      },
+      {
+        "control_id": "MC-003",
+        "control_name": "Termination Checklist",
+        "description": "HR and IT coordinated process for immediate access revocation upon termination",
+        "control_type": "Preventive",
+        "frequency": "Per termination",
+        "test_procedure": "Verify termination checklist completion for 100% of terminated employees",
+        "effectiveness": "Very High"
+      }
+    ],
+    "automated_controls": [
+      {
+        "control_id": "AC-001",
+        "control_name": "Automated SoD Checking",
+        "description": "Real-time segregation of duties validation in access request workflow",
+        "control_type": "Preventive",
+        "system": "Identity Management System",
+        "test_procedure": "Test SoD rules with sample conflicting role combinations",
+        "effectiveness": "Very High"
+      },
+      {
+        "control_id": "AC-002",
+        "control_name": "Automated Provisioning",
+        "description": "System-driven account creation based on approved role templates",
+        "control_type": "Preventive",
+        "system": "Identity Management System",
+        "test_procedure": "Verify automated provisioning matches role matrix requirements",
+        "effectiveness": "High"
+      },
+      {
+        "control_id": "AC-003",
+        "control_name": "Access Expiration",
+        "description": "Automatic access rights expiration after defined time periods",
+        "control_type": "Preventive",
+        "system": "Access Governance Platform",
+        "test_procedure": "Verify temporary access expires as configured",
+        "effectiveness": "High"
+      }
+    ],
+    "itgc_controls": [
+      {
+        "control_id": "ITGC-001",
+        "control_name": "System Access Logs",
+        "description": "Comprehensive logging of all access provisioning activities",
+        "control_type": "Detective",
+        "system": "Identity Management System",
+        "test_procedure": "Verify log completeness and accuracy for sample transactions",
+        "effectiveness": "High"
+      },
+      {
+        "control_id": "ITGC-002",
+        "control_name": "Change Management",
+        "description": "Formal change process for access rule modifications",
+        "control_type": "Preventive",
+        "system": "Change Management System",
+        "test_procedure": "Review change tickets for proper approval and testing",
+        "effectiveness": "High"
+      },
+      {
+        "control_id": "ITGC-003",
+        "control_name": "Backup and Recovery",
+        "description": "Regular backup of access configuration and disaster recovery testing",
+        "control_type": "Corrective",
+        "system": "Backup Systems",
+        "test_procedure": "Verify backup restoration capabilities quarterly",
+        "effectiveness": "High"
+      },
+      {
+        "control_id": "ITGC-004",
+        "control_name": "User Access Recertification",
+        "description": "System-driven quarterly access certification workflow",
+        "control_type": "Detective",
+        "system": "Access Governance Platform",
+        "test_procedure": "Validate recertification completion and exception handling",
+        "effectiveness": "Very High"
+      }
+    ]
+  },
+  "compliance_requirements": {
+    "sox_404": true,
+    "pci_dss": true,
+    "gdpr": true,
+    "ccpa": true,
+    "local_regulations": [
+      "BaFin (Germany)",
+      "BACEN (Brazil)",
+      "FSA (Japan)"
+    ]
+  }
+}
