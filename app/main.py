@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import analyze, fit_gap, global_local, monitoring, transcript_analysis, upload, visualizations
+from app.routers import analyze, database_api, fit_gap, global_local, monitoring, transcript_analysis, upload, visualizations
 
 app = FastAPI(
     title="Control Design Assessment API",
@@ -49,25 +49,44 @@ app.include_router(global_local.router, prefix="/api")
 app.include_router(fit_gap.router, prefix="/api")
 app.include_router(monitoring.router, prefix="/api")
 app.include_router(transcript_analysis.router, prefix="/api")
+app.include_router(database_api.router, prefix="/api")
 app.include_router(visualizations.router, prefix="/api")
 
 
 # ---------------------------------------------------------------------------
-# Startup - Load global framework data
+# Startup - Load global framework data and seed database
 # ---------------------------------------------------------------------------
 @app.on_event("startup")
-async def load_global_framework():
-    """Load global framework data into memory on startup."""
+async def startup_tasks():
+    """Initialize application on startup."""
     from app.services.framework_loader import load_global_framework
+    from app.database import seed_all_data
     
     try:
-        framework = load_global_framework()
-        if framework:
-            print(f"✅ Global framework loaded successfully: {framework.get('process_name', 'Unknown')}")
+        # Seed database with demo data
+        print("🌱 Seeding database with demo data...")
+        seed_success = seed_all_data()
+        
+        if seed_success:
+            # Load framework into memory
+            framework = load_global_framework()
+            if framework:
+                print(f"✅ Application started successfully: {framework.get('process_name', 'Unknown')}")
+                print(f"📊 Loaded {len(framework.get('baselines', []))} baselines from database")
+            else:
+                print("❌ Failed to load framework after seeding")
         else:
-            print("❌ Global framework file not found or empty")
+            print("❌ Database seeding failed, using fallback data")
+            
     except Exception as e:
-        print(f"❌ Error loading global framework: {e}")
+        print(f"❌ Startup error: {e}")
+        # Try to load fallback data
+        try:
+            framework = load_global_framework()
+            if framework:
+                print(f"✅ Fallback loaded: {framework.get('process_name', 'Unknown')}")
+        except Exception as fallback_error:
+            print(f"❌ Even fallback failed: {fallback_error}")
 
 
 # ---------------------------------------------------------------------------

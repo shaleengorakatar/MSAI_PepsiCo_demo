@@ -1,24 +1,105 @@
 """
-Global Framework Loader - Avoids circular imports
+Global Framework Loader - Database-backed with fallback
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 # Global variable to store the framework data
 GLOBAL_FRAMEWORK: Dict[str, Any] = {}
 
 
 def load_global_framework() -> Dict[str, Any]:
-    """Load global framework data from JSON file."""
+    """Load global framework data from database first, then fallback to JSON."""
     global GLOBAL_FRAMEWORK
     
     if GLOBAL_FRAMEWORK:
         return GLOBAL_FRAMEWORK
     
-    # Try multiple possible paths
+    # Try database first
+    if framework_from_db := load_framework_from_db():
+        GLOBAL_FRAMEWORK = framework_from_db
+        print("✅ Global framework loaded from database")
+        return GLOBAL_FRAMEWORK
+    
+    # Fallback to JSON files
+    if framework_from_json := load_framework_from_json():
+        GLOBAL_FRAMEWORK = framework_from_json
+        print("✅ Global framework loaded from JSON fallback")
+        return GLOBAL_FRAMEWORK
+    
+    # Final fallback to embedded data
+    print("❌ No framework data found, using embedded fallback")
+    GLOBAL_FRAMEWORK = get_fallback_framework()
+    return GLOBAL_FRAMEWORK
+
+
+def load_framework_from_db() -> Dict[str, Any]:
+    """Load framework from PostgreSQL database."""
+    try:
+        from app.database import get_db_connection
+        
+        conn = get_db_connection()
+        if not conn:
+            return {}
+        
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM framework ORDER BY updated_at DESC LIMIT 1")
+            row = cur.fetchone()
+            
+            if row:
+                framework = dict(row)
+                # Parse JSON fields
+                if framework.get('process_map'):
+                    framework['process_map'] = json.loads(framework['process_map'])
+                if framework.get('risk_register'):
+                    framework['risk_register'] = json.loads(framework['risk_register'])
+                if framework.get('mitigating_controls'):
+                    framework['mitigating_controls'] = json.loads(framework['mitigating_controls'])
+                if framework.get('compliance_requirements'):
+                    framework['compliance_requirements'] = json.loads(framework['compliance_requirements'])
+                
+                # Add baselines from database
+                framework['baselines'] = get_baselines_from_db()
+                
+                return framework
+        
+        return {}
+        
+    except Exception as e:
+        print(f"❌ Error loading framework from database: {e}")
+        return {}
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+
+def get_baselines_from_db() -> List[Dict[str, Any]]:
+    """Get baselines from database."""
+    try:
+        from app.database import get_db_connection
+        
+        conn = get_db_connection()
+        if not conn:
+            return []
+        
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM baselines ORDER BY baseline_id")
+            rows = cur.fetchall()
+            return [dict(row) for row in rows]
+        
+    except Exception as e:
+        print(f"❌ Error loading baselines from database: {e}")
+        return []
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+
+def load_framework_from_json() -> Dict[str, Any]:
+    """Load framework from JSON file (fallback)."""
     possible_paths = [
         Path("global_framework.json"),
         Path("app/global_framework.json"),
@@ -30,17 +111,14 @@ def load_global_framework() -> Dict[str, Any]:
         try:
             if framework_path.exists():
                 with open(framework_path, 'r', encoding='utf-8') as f:
-                    GLOBAL_FRAMEWORK = json.load(f)
-                print(f"✅ Global framework loaded from {framework_path}: {GLOBAL_FRAMEWORK.get('process_name', 'Unknown')}")
-                return GLOBAL_FRAMEWORK
+                    framework = json.load(f)
+                print(f"✅ Global framework loaded from {framework_path}: {framework.get('process_name', 'Unknown')}")
+                return framework
         except Exception as e:
             print(f"❌ Error loading from {framework_path}: {e}")
             continue
     
-    # If no file found, use embedded fallback data
-    print("❌ Global framework file not found, using fallback data")
-    GLOBAL_FRAMEWORK = get_fallback_framework()
-    return GLOBAL_FRAMEWORK
+    return {}
 
 
 def get_fallback_framework() -> Dict[str, Any]:
