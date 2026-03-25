@@ -17,14 +17,14 @@ async def get_transcripts():
 
 
 @router.get("/framework")
-async def get_global_framework():
+async def get_global_framework_endpoint():
     """Get the global framework data for frontend display."""
-    from app.main import GLOBAL_FRAMEWORK
+    from app.services.framework_loader import get_global_framework, is_framework_loaded
     
-    if not GLOBAL_FRAMEWORK:
+    if not is_framework_loaded():
         raise HTTPException(status_code=503, detail="Global framework not loaded")
     
-    return GLOBAL_FRAMEWORK
+    return get_global_framework()
 
 
 @router.get("/interviews")

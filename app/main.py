@@ -12,9 +12,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import analyze, fit_gap, global_local, monitoring, transcript_analysis, upload, visualizations
 
-# Global variable to store the framework data
-GLOBAL_FRAMEWORK = None
-
 app = FastAPI(
     title="Control Design Assessment API",
     description=(
@@ -61,19 +58,16 @@ app.include_router(visualizations.router, prefix="/api")
 @app.on_event("startup")
 async def load_global_framework():
     """Load global framework data into memory on startup."""
-    global GLOBAL_FRAMEWORK
+    from app.services.framework_loader import load_global_framework
+    
     try:
-        framework_path = Path("global_framework.json")
-        if framework_path.exists():
-            with open(framework_path, 'r', encoding='utf-8') as f:
-                GLOBAL_FRAMEWORK = json.load(f)
-            print(f"✅ Global framework loaded successfully: {GLOBAL_FRAMEWORK['process_name']}")
+        framework = load_global_framework()
+        if framework:
+            print(f"✅ Global framework loaded successfully: {framework.get('process_name', 'Unknown')}")
         else:
-            print("❌ Global framework file not found")
-            GLOBAL_FRAMEWORK = {}
+            print("❌ Global framework file not found or empty")
     except Exception as e:
         print(f"❌ Error loading global framework: {e}")
-        GLOBAL_FRAMEWORK = {}
 
 
 # ---------------------------------------------------------------------------

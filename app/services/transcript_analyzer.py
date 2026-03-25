@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Dict, Any
 
-from app.main import GLOBAL_FRAMEWORK
+from app.services.framework_loader import get_global_framework, is_framework_loaded
 
 
 def load_mock_interviews() -> Dict[str, Any]:
@@ -49,14 +49,15 @@ def analyze_transcript(transcript_id: str) -> Dict[str, Any]:
         }
     
     # Validate global framework is loaded
-    if not GLOBAL_FRAMEWORK:
+    if not is_framework_loaded():
         return {
             "error": "Global framework not loaded",
             "message": "Please ensure the application started correctly"
         }
     
     # Build the mega-prompt using context stuffing
-    mega_prompt = build_mega_prompt(transcript_data, GLOBAL_FRAMEWORK)
+    framework = get_global_framework()
+    mega_prompt = build_mega_prompt(transcript_data, framework)
     
     return {
         "transcript_id": transcript_id,
@@ -65,7 +66,7 @@ def analyze_transcript(transcript_id: str) -> Dict[str, Any]:
         "position": transcript_data.get("position"),
         "mega_prompt": mega_prompt,
         "context_size": len(mega_prompt),
-        "framework_loaded": bool(GLOBAL_FRAMEWORK),
+        "framework_loaded": is_framework_loaded(),
         "transcript_loaded": bool(transcript_data)
     }
 
