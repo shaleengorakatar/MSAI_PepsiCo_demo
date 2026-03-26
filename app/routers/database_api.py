@@ -123,6 +123,176 @@ async def get_baseline_full(baseline_id: str) -> Dict[str, Any]:
         conn.close()
 
 
+@router.get("/market-variations/{market_code}/{baseline_id}")
+async def get_market_variation(market_code: str, baseline_id: str) -> Dict[str, Any]:
+    """Get market variation for a specific market and baseline."""
+    print(f"🔍 Getting market variation for {market_code} - {baseline_id}")
+    conn = get_db_connection()
+    if not conn:
+        return {"error": "Database not available"}
+    
+    try:
+        cur = conn.cursor()
+        
+        # Get main variation record
+        cur.execute("""
+            SELECT * FROM market_variations 
+            WHERE market_code = ? AND baseline_id = ?
+        """, (market_code, baseline_id))
+        variation = cur.fetchone()
+        
+        if not variation:
+            return {"error": "Market variation not found"}
+        
+        variation_dict = dict(variation)
+        variation_id = variation_dict['id']
+        
+        # Parse notes JSON
+        if variation_dict.get('notes'):
+            variation_dict['notes'] = json.loads(variation_dict['notes'])
+        
+        # Get step overrides
+        cur.execute("""
+            SELECT * FROM market_step_overrides 
+            WHERE variation_id = ? ORDER BY step_number
+        """, (variation_id,))
+        variation_dict['overrides'] = [dict(row) for row in cur.fetchall()]
+        
+        # Get additional steps
+        cur.execute("""
+            SELECT * FROM market_additional_steps 
+            WHERE variation_id = ? ORDER BY step_number
+        """, (variation_id,))
+        additional_steps = []
+        for step in cur.fetchall():
+            step_dict = dict(step)
+            # Parse JSON fields
+            if step_dict.get('title'):
+                step_dict['title'] = json.loads(step_dict['title'])
+            if step_dict.get('description'):
+                step_dict['description'] = json.loads(step_dict['description'])
+            additional_steps.append(step_dict)
+        variation_dict['additional_steps'] = additional_steps
+        
+        # Get removed steps
+        cur.execute("""
+            SELECT step_number FROM market_removed_steps 
+            WHERE variation_id = ? ORDER BY step_number
+        """, (variation_id,))
+        variation_dict['removed_step_numbers'] = [row[0] for row in cur.fetchall()]
+        
+        # Get additional risks
+        cur.execute("""
+            SELECT * FROM market_additional_risks 
+            WHERE variation_id = ? ORDER BY id
+        """, (variation_id,))
+        additional_risks = []
+        for risk in cur.fetchall():
+            risk_dict = dict(risk)
+            # Parse JSON field
+            if risk_dict.get('mitigating_controls'):
+                risk_dict['mitigating_controls'] = json.loads(risk_dict['mitigating_controls'])
+            additional_risks.append(risk_dict)
+        variation_dict['additional_risks'] = additional_risks
+        
+        # Add summary
+        variation_dict['summary'] = {
+            "overrides_count": len(variation_dict['overrides']),
+            "additional_steps_count": len(variation_dict['additional_steps']),
+            "removed_steps_count": len(variation_dict['removed_step_numbers']),
+            "additional_risks_count": len(variation_dict['additional_risks'])
+        }
+        
+        print(f"✅ Returning market variation: {len(variation_dict['overrides'])} overrides, {len(variation_dict['additional_steps'])} additional steps")
+        return variation_dict
+        
+    except Exception as e:
+        print(f"❌ Error getting market variation: {e}")
+        import traceback
+        print(f"❌ Full traceback: {traceback.format_exc()}")
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
+@router.get("/market-variations")
+async def get_all_market_variations() -> List[Dict[str, Any]]:
+    """Get all market variations with summary information."""
+    print("🔍 Getting all market variations")
+    conn = get_db_connection()
+    if not conn:
+        return []
+    
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT mv.*, 
+                   (SELECT COUNT(*) FROM market_step_overrides WHERE variation_id = mv.id) as overrides_count,
+                   (SELECT COUNT(*) FROM market_additional_steps WHERE variation_id = mv.id) as additional_steps_count,
+                   (SELECT COUNT(*) FROM market_removed_steps WHERE variation_id = mv.id) as removed_steps_count,
+                   (SELECT COUNT(*) FROM market_additional_risks WHERE variation_id = mv.id) as additional_risks_count
+            FROM market_variations mv 
+            ORDER BY mv.market_code, mv.baseline_id
+        """)
+        
+        variations = []
+        for row in cur.fetchall():
+            variation_dict = dict(row)
+            # Parse notes JSON
+            if variation_dict.get('notes'):
+                try:
+                    variation_dict['notes'] = json.loads(variation_dict['notes'])
+                except:
+                    variation_dict['notes'] = {"default": "Notes unavailable"}
+            variations.append(variation_dict)
+        
+        print(f"✅ Returning {len(variations)} market variations")
+        return variations
+        
+    except Exception as e:
+        print(f"❌ Error getting all market variations: {e}")
+        return []
+    finally:
+        conn.close()
+
+
+@router.get("/market-variations/market/{market_code}")
+async def get_variations_by_market(market_code: str) -> List[Dict[str, Any]]:
+    """Get all variations for a specific market."""
+    print(f"🔍 Getting variations for market {market_code}")
+    conn = get_db_connection()
+    if not conn:
+        return []
+    
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT * FROM market_variations 
+            WHERE market_code = ? 
+            ORDER BY baseline_id
+        """, (market_code,))
+        
+        variations = []
+        for row in cur.fetchall():
+            variation_dict = dict(row)
+            # Parse notes JSON
+            if variation_dict.get('notes'):
+                try:
+                    variation_dict['notes'] = json.loads(variation_dict['notes'])
+                except:
+                    variation_dict['notes'] = {"default": "Notes unavailable"}
+            variations.append(variation_dict)
+        
+        print(f"✅ Returning {len(variations)} variations for market {market_code}")
+        return variations
+        
+    except Exception as e:
+        print(f"❌ Error getting variations for market {market_code}: {e}")
+        return []
+    finally:
+        conn.close()
+
+
 def get_fallback_baselines() -> List[Dict[str, Any]]:
     """Fallback baselines when database is not available."""
     return [

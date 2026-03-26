@@ -150,6 +150,65 @@ def create_tables():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (baseline_id) REFERENCES baselines(baseline_id) ON DELETE CASCADE
             );
+
+            -- Market Variations Tables
+            CREATE TABLE IF NOT EXISTS market_variations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                market_code TEXT NOT NULL,
+                market_name TEXT NOT NULL,
+                baseline_id TEXT NOT NULL,
+                language TEXT NOT NULL,
+                notes TEXT,  -- JSON with default and translations
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (baseline_id) REFERENCES baselines(baseline_id) ON DELETE CASCADE,
+                UNIQUE(market_code, baseline_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS market_step_overrides (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                variation_id INTEGER NOT NULL,
+                step_number INTEGER NOT NULL,
+                field TEXT NOT NULL,  -- 'title' | 'description' | 'responsible_role'
+                value TEXT NOT NULL,
+                reason TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (variation_id) REFERENCES market_variations(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS market_additional_steps (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                variation_id INTEGER NOT NULL,
+                step_number INTEGER NOT NULL,
+                title TEXT NOT NULL,  -- JSON with default and translations
+                description TEXT NOT NULL,  -- JSON with default and translations
+                responsible_role TEXT NOT NULL,
+                is_mandatory BOOLEAN NOT NULL DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (variation_id) REFERENCES market_variations(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS market_removed_steps (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                variation_id INTEGER NOT NULL,
+                step_number INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (variation_id) REFERENCES market_variations(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS market_additional_risks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                variation_id INTEGER NOT NULL,
+                description TEXT NOT NULL,
+                severity TEXT NOT NULL,  -- low|medium|high|critical
+                mitigating_controls TEXT NOT NULL,  -- JSON array
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (variation_id) REFERENCES market_variations(id) ON DELETE CASCADE
+            );
         """)
         
         conn.commit()
@@ -551,6 +610,128 @@ def seed_compliance_for_baseline(cur, baseline_id):
               json.dumps(requirement["applicable_regions"])))
 
 
+def seed_market_variations_data():
+    """Seed market variations data from JSON files"""
+    conn = get_db_connection()
+    if not conn:
+        return False
+    
+    try:
+        import json
+        import os
+        from pathlib import Path
+        
+        cur = conn.cursor()
+        
+        # Load market variations from JSON files
+        project_root = Path(__file__).parent.parent
+        market_files = [
+            project_root / "market_variations.json",
+            project_root / "additional_market_variations.json"
+        ]
+        
+        print(f"🔄 Starting Market Variations seeding...")
+        
+        for file_path in market_files:
+            if file_path.exists():
+                print(f"📁 Loading market variations from {file_path.name}")
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                # Handle different JSON structures
+                variations = []
+                if 'market_variations' in data:
+                    variations = data['market_variations']
+                elif 'additional_variations' in data:
+                    variations = data['additional_variations']
+                
+                for variation in variations:
+                    print(f"📝 Seeding variation for {variation['market_code']} - {variation['baseline_id']}")
+                    
+                    # Insert main variation record
+                    cur.execute("""
+                        INSERT OR REPLACE INTO market_variations 
+                        (market_code, market_name, baseline_id, language, notes)
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (
+                        variation['market_code'],
+                        variation['market_name'],
+                        variation['baseline_id'],
+                        variation['language'],
+                        json.dumps(variation['notes'])
+                    ))
+                    
+                    # Get variation ID
+                    cur.execute("SELECT id FROM market_variations WHERE market_code = ? AND baseline_id = ?", 
+                              (variation['market_code'], variation['baseline_id']))
+                    variation_id = cur.fetchone()[0]
+                    
+                    # Seed step overrides
+                    if 'overrides' in variation:
+                        for override in variation['overrides']:
+                            cur.execute("""
+                                INSERT OR REPLACE INTO market_step_overrides
+                                (variation_id, step_number, field, value, reason)
+                                VALUES (?, ?, ?, ?, ?)
+                            """, (
+                                variation_id,
+                                override['step_number'],
+                                override['field'],
+                                override['value'],
+                                override['reason']
+                            ))
+                    
+                    # Seed additional steps
+                    if 'additional_steps' in variation:
+                        for step in variation['additional_steps']:
+                            cur.execute("""
+                                INSERT OR REPLACE INTO market_additional_steps
+                                (variation_id, step_number, title, description, responsible_role, is_mandatory)
+                                VALUES (?, ?, ?, ?, ?, ?)
+                            """, (
+                                variation_id,
+                                step['step_number'],
+                                json.dumps(step['title']),
+                                json.dumps(step['description']),
+                                step['responsible_role'],
+                                step['is_mandatory']
+                            ))
+                    
+                    # Seed removed steps
+                    if 'removed_step_numbers' in variation:
+                        for step_num in variation['removed_step_numbers']:
+                            cur.execute("""
+                                INSERT OR REPLACE INTO market_removed_steps
+                                (variation_id, step_number)
+                                VALUES (?, ?)
+                            """, (variation_id, step_num))
+                    
+                    # Seed additional risks
+                    if 'additional_risks' in variation:
+                        for risk in variation['additional_risks']:
+                            cur.execute("""
+                                INSERT OR REPLACE INTO market_additional_risks
+                                (variation_id, description, severity, mitigating_controls)
+                                VALUES (?, ?, ?, ?)
+                            """, (
+                                variation_id,
+                                risk['description'],
+                                risk['severity'],
+                                json.dumps(risk['mitigating_controls'])
+                            ))
+        
+        conn.commit()
+        print("✅ Market Variations data seeded successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error seeding Market Variations data: {e}")
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
+
+
 def seed_all_data():
     """Seed all demo data"""
     print("🌱 Starting database seeding...")
@@ -576,6 +757,10 @@ def seed_all_data():
     
     # Seed Golden Thread data after baselines are created
     if success and not seed_golden_thread_data():
+        success = False
+    
+    # Seed Market Variations data after Golden Thread is created
+    if success and not seed_market_variations_data():
         success = False
     
     if success:
