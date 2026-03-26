@@ -3,6 +3,7 @@ Database setup and seeding for PepsiCo Control Design Assessment
 """
 from __future__ import annotations
 
+import csv
 import json
 import os
 from datetime import datetime
@@ -10,23 +11,40 @@ from typing import Dict, Any, List
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import sqlite3
 
 from app.config import settings
 
 
 def get_db_connection():
-    """Get database connection"""
+    """Get database connection - PostgreSQL or SQLite"""
     if not settings.database_url:
         print("❌ DATABASE_URL not configured")
         return None
     
+    # Check if it's a SQLite URL
+    if settings.database_url.startswith("sqlite:///"):
+        try:
+            # Extract database path from SQLite URL
+            db_path = settings.database_url.replace("sqlite:///", "")
+            if not os.path.isabs(db_path):
+                # Make relative path absolute
+                db_path = os.path.join(os.path.dirname(__file__), '..', db_path)
+            
+            conn = sqlite3.connect(db_path)
+            print(f"✅ SQLite database connection successful: {db_path}")
+            return conn
+        except Exception as e:
+            print(f"❌ SQLite connection failed: {e}")
+            return None
+    
+    # Try PostgreSQL
     try:
         conn = psycopg2.connect(settings.database_url)
-        print("✅ Database connection successful")
+        print("✅ PostgreSQL database connection successful")
         return conn
     except Exception as e:
-        print(f"❌ Database connection error: {e}")
-        print(f"🔍 DATABASE_URL: {settings.database_url[:50]}..." if len(settings.database_url) > 50 else f"🔍 DATABASE_URL: {settings.database_url}")
+        print(f"❌ PostgreSQL connection failed: {e}")
         return None
 
 
@@ -37,75 +55,148 @@ def create_tables():
         return False
     
     try:
-        with conn.cursor() as cur:
-            # Create baselines table
+        # Check if using SQLite or PostgreSQL
+        is_sqlite = isinstance(conn, sqlite3.Connection)
+        
+        if is_sqlite:
+            cur = conn.cursor()
+            
+            # Create baselines table (SQLite)
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS baselines (
-                    id SERIAL PRIMARY KEY,
-                    baseline_id VARCHAR(20) UNIQUE NOT NULL,
-                    baseline_name VARCHAR(200) NOT NULL,
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    baseline_id TEXT UNIQUE NOT NULL,
+                    baseline_name TEXT NOT NULL,
                     description TEXT,
-                    maturity_level VARCHAR(50),
-                    control_coverage VARCHAR(10),
+                    maturity_level TEXT,
+                    control_coverage TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             
-            # Create tools table
+            # Create tools table (SQLite)
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS tools (
-                    id SERIAL PRIMARY KEY,
-                    tool_id VARCHAR(20) UNIQUE NOT NULL,
-                    tool_name VARCHAR(200) NOT NULL,
-                    tool_type VARCHAR(50),
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tool_id TEXT UNIQUE NOT NULL,
+                    tool_name TEXT NOT NULL,
+                    tool_type TEXT,
                     description TEXT,
-                    vendor VARCHAR(100),
+                    vendor TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             
-            # Create regions table
+            # Create regions table (SQLite)
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS regions (
-                    id SERIAL PRIMARY KEY,
-                    region_id VARCHAR(20) UNIQUE NOT NULL,
-                    region_name VARCHAR(100) NOT NULL,
-                    country VARCHAR(100),
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    region_id TEXT UNIQUE NOT NULL,
+                    region_name TEXT NOT NULL,
+                    country TEXT,
                     compliance_score INTEGER,
-                    risk_level VARCHAR(20),
-                    interviewee VARCHAR(200),
-                    position VARCHAR(200),
+                    risk_level TEXT,
+                    interviewee TEXT,
+                    position TEXT,
                     interview_date DATE,
-                    language VARCHAR(50),
+                    language TEXT,
                     transcript_content TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             
-            # Create framework table
+            # Create framework table (SQLite)
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS framework (
-                    id SERIAL PRIMARY KEY,
-                    process_name VARCHAR(200),
-                    process_id VARCHAR(20),
-                    version VARCHAR(20),
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    process_name TEXT,
+                    process_id TEXT,
+                    version TEXT,
                     effective_date DATE,
                     business_context TEXT,
-                    process_map JSONB,
-                    risk_register JSONB,
-                    mitigating_controls JSONB,
-                    compliance_requirements JSONB,
+                    process_map TEXT,
+                    risk_register TEXT,
+                    mitigating_controls TEXT,
+                    compliance_requirements TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             
-            conn.commit()
-            print("✅ Tables created successfully")
-            return True
+        else:
+            # PostgreSQL with context manager
+            with conn.cursor() as cur:
+                # Create baselines table (PostgreSQL)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS baselines (
+                        id SERIAL PRIMARY KEY,
+                        baseline_id VARCHAR(20) UNIQUE NOT NULL,
+                        baseline_name VARCHAR(200) NOT NULL,
+                        description TEXT,
+                        maturity_level VARCHAR(50),
+                        control_coverage VARCHAR(10),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                
+                # Create tools table (PostgreSQL)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS tools (
+                        id SERIAL PRIMARY KEY,
+                        tool_id VARCHAR(20) UNIQUE NOT NULL,
+                        tool_name VARCHAR(200) NOT NULL,
+                        tool_type VARCHAR(50),
+                        description TEXT,
+                        vendor VARCHAR(100),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                
+                # Create regions table (PostgreSQL)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS regions (
+                        id SERIAL PRIMARY KEY,
+                        region_id VARCHAR(20) UNIQUE NOT NULL,
+                        region_name VARCHAR(100) NOT NULL,
+                        country VARCHAR(100),
+                        compliance_score INTEGER,
+                        risk_level VARCHAR(20),
+                        interviewee VARCHAR(200),
+                        position VARCHAR(200),
+                        interview_date DATE,
+                        language VARCHAR(50),
+                        transcript_content TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                
+                # Create framework table (PostgreSQL)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS framework (
+                        id SERIAL PRIMARY KEY,
+                        process_name VARCHAR(200),
+                        process_id VARCHAR(20),
+                        version VARCHAR(20),
+                        effective_date DATE,
+                        business_context TEXT,
+                        process_map JSONB,
+                        risk_register JSONB,
+                        mitigating_controls JSONB,
+                        compliance_requirements JSONB,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+        
+        conn.commit()
+        print("✅ Tables created successfully")
+        return True
             
     except Exception as e:
         print(f"❌ Error creating tables: {e}")
@@ -116,59 +207,64 @@ def create_tables():
 
 
 def seed_baselines():
-    """Seed baselines data"""
+    """Seed baselines data from CSV file"""
     conn = get_db_connection()
     if not conn:
         return False
     
-    baselines_data = [
-        {
-            "baseline_id": "BL-001",
-            "baseline_name": "Core Access Management",
-            "description": "Fundamental user access provisioning and deprovisioning",
-            "maturity_level": "Optimized",
-            "control_coverage": "95%"
-        },
-        {
-            "baseline_id": "BL-002",
-            "baseline_name": "Segregation of Duties",
-            "description": "SoD enforcement and conflict prevention",
-            "maturity_level": "Managed",
-            "control_coverage": "88%"
-        },
-        {
-            "baseline_id": "BL-003",
-            "baseline_name": "Access Certification",
-            "description": "Periodic access review and certification",
-            "maturity_level": "Defined",
-            "control_coverage": "82%"
-        },
-        {
-            "baseline_id": "BL-004",
-            "baseline_name": "Emergency Access",
-            "description": "Break-glass and emergency access procedures",
-            "maturity_level": "Managed",
-            "control_coverage": "75%"
-        }
-    ]
+    baselines_data = []
+    csv_file_path = os.path.join(os.path.dirname(__file__), '..', 'demo_data', 'baselines.csv')
     
     try:
-        with conn.cursor() as cur:
+        with open(csv_file_path, 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                baselines_data.append({
+                    "baseline_id": row["baseline_id"],
+                    "baseline_name": row["baseline_name"],
+                    "description": row["description"],
+                    "maturity_level": row["maturity_level"],
+                    "control_coverage": row["control_coverage"]
+                })
+        print(f"✅ Loaded {len(baselines_data)} baselines from CSV")
+    except FileNotFoundError:
+        print(f"❌ CSV file not found: {csv_file_path}")
+        return False
+    except Exception as e:
+        print(f"❌ Error reading CSV file: {e}")
+        return False
+    
+    try:
+        # Check if using SQLite or PostgreSQL
+        is_sqlite = isinstance(conn, sqlite3.Connection)
+        
+        if is_sqlite:
+            cur = conn.cursor()
             for baseline in baselines_data:
+                # SQLite uses INSERT OR REPLACE
                 cur.execute("""
-                    INSERT INTO baselines (baseline_id, baseline_name, description, maturity_level, control_coverage)
-                    VALUES (%(baseline_id)s, %(baseline_name)s, %(description)s, %(maturity_level)s, %(control_coverage)s)
-                    ON CONFLICT (baseline_id) DO UPDATE SET
-                        baseline_name = EXCLUDED.baseline_name,
-                        description = EXCLUDED.description,
-                        maturity_level = EXCLUDED.maturity_level,
-                        control_coverage = EXCLUDED.control_coverage,
-                        updated_at = CURRENT_TIMESTAMP
-                """, baseline)
-            
-            conn.commit()
-            print("✅ Baselines seeded successfully")
-            return True
+                    INSERT OR REPLACE INTO baselines (baseline_id, baseline_name, description, maturity_level, control_coverage)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (baseline["baseline_id"], baseline["baseline_name"], baseline["description"], 
+                      baseline["maturity_level"], baseline["control_coverage"]))
+        else:
+            # PostgreSQL with context manager
+            with conn.cursor() as cur:
+                for baseline in baselines_data:
+                    cur.execute("""
+                        INSERT INTO baselines (baseline_id, baseline_name, description, maturity_level, control_coverage)
+                        VALUES (%(baseline_id)s, %(baseline_name)s, %(description)s, %(maturity_level)s, %(control_coverage)s)
+                        ON CONFLICT (baseline_id) DO UPDATE SET
+                            baseline_name = EXCLUDED.baseline_name,
+                            description = EXCLUDED.description,
+                            maturity_level = EXCLUDED.maturity_level,
+                            control_coverage = EXCLUDED.control_coverage,
+                            updated_at = CURRENT_TIMESTAMP
+                    """, baseline)
+        
+        conn.commit()
+        print("✅ Baselines seeded successfully")
+        return True
             
     except Exception as e:
         print(f"❌ Error seeding baselines: {e}")
@@ -179,45 +275,64 @@ def seed_baselines():
 
 
 def seed_tools():
-    """Seed tools data"""
+    """Seed tools data from CSV file"""
     conn = get_db_connection()
     if not conn:
         return False
     
-    tools_data = [
-        {
-            "tool_id": "TL-001",
-            "tool_name": "SAP GRC Access Control",
-            "tool_type": "Compliance Management",
-            "description": "Automated SoD analysis and risk remediation for SAP systems",
-            "vendor": "SAP"
-        },
-        {
-            "tool_id": "TL-002",
-            "tool_name": "Oracle Identity Manager",
-            "tool_type": "Identity Management",
-            "description": "Enterprise identity and access management with automated provisioning",
-            "vendor": "Oracle"
-        }
-    ]
+    tools_data = []
+    csv_file_path = os.path.join(os.path.dirname(__file__), '..', 'demo_data', 'tools.csv')
     
     try:
-        with conn.cursor() as cur:
+        with open(csv_file_path, 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                tools_data.append({
+                    "tool_id": row["tool_id"],
+                    "tool_name": row["tool_name"],
+                    "tool_type": row["tool_type"],
+                    "description": row["description"],
+                    "vendor": row["vendor"]
+                })
+        print(f"✅ Loaded {len(tools_data)} tools from CSV")
+    except FileNotFoundError:
+        print(f"❌ CSV file not found: {csv_file_path}")
+        return False
+    except Exception as e:
+        print(f"❌ Error reading CSV file: {e}")
+        return False
+    
+    try:
+        # Check if using SQLite or PostgreSQL
+        is_sqlite = isinstance(conn, sqlite3.Connection)
+        
+        if is_sqlite:
+            cur = conn.cursor()
             for tool in tools_data:
+                # SQLite uses INSERT OR REPLACE
                 cur.execute("""
-                    INSERT INTO tools (tool_id, tool_name, tool_type, description, vendor)
-                    VALUES (%(tool_id)s, %(tool_name)s, %(tool_type)s, %(description)s, %(vendor)s)
-                    ON CONFLICT (tool_id) DO UPDATE SET
-                        tool_name = EXCLUDED.tool_name,
-                        tool_type = EXCLUDED.tool_type,
-                        description = EXCLUDED.description,
-                        vendor = EXCLUDED.vendor,
-                        updated_at = CURRENT_TIMESTAMP
-                """, tool)
-            
-            conn.commit()
-            print("✅ Tools seeded successfully")
-            return True
+                    INSERT OR REPLACE INTO tools (tool_id, tool_name, tool_type, description, vendor)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (tool["tool_id"], tool["tool_name"], tool["tool_type"], 
+                      tool["description"], tool["vendor"]))
+        else:
+            # PostgreSQL with context manager
+            with conn.cursor() as cur:
+                for tool in tools_data:
+                    cur.execute("""
+                        INSERT INTO tools (tool_id, tool_name, tool_type, description, vendor)
+                        VALUES (%(tool_id)s, %(tool_name)s, %(tool_type)s, %(description)s, %(vendor)s)
+                        ON CONFLICT (tool_id) DO UPDATE SET
+                            tool_name = EXCLUDED.tool_name,
+                            tool_type = EXCLUDED.tool_type,
+                            description = EXCLUDED.description,
+                            vendor = EXCLUDED.vendor,
+                            updated_at = CURRENT_TIMESTAMP
+                    """, tool)
+        
+        conn.commit()
+        print("✅ Tools seeded successfully")
+        return True
             
     except Exception as e:
         print(f"❌ Error seeding tools: {e}")
@@ -228,120 +343,75 @@ def seed_tools():
 
 
 def seed_regions():
-    """Seed regions data"""
+    """Seed regions data from CSV file"""
     conn = get_db_connection()
     if not conn:
         return False
     
-    regions_data = [
-        {
-            "region_id": "GER-001",
-            "region_name": "Germany",
-            "country": "Germany",
-            "compliance_score": 85,
-            "risk_level": "Low",
-            "interviewee": "Hans Mueller",
-            "position": "Regional IT Manager",
-            "interview_date": "2024-03-15",
-            "language": "English",
-            "transcript_content": """Interviewer: Can you walk me through your current user access management process?
-
-Hans: Ja, our process is quite standardized, mostly following the global framework. We use the main HRIS system for access requests, and the automated SoD checks work well. However, we have one specific deviation - our tax reporting system uses a localized German tax software called 'SteuerPro' that is not integrated with the global IT infrastructure. For this system, we have a manual workaround where the tax team submits paper forms to IT, and we manually create accounts."""
-        },
-        {
-            "region_id": "BRA-001",
-            "region_name": "Brazil",
-            "country": "Brazil",
-            "compliance_score": 35,
-            "risk_level": "Critical",
-            "interviewee": "Carlos Silva",
-            "position": "Operations Manager",
-            "interview_date": "2024-03-18",
-            "language": "Portuguese (translated to English)",
-            "transcript_content": """Interviewer: Can you describe your user access management process?
-
-Carlos: Look, to be honest, our process is very different from the global standard. The main system is very slow - sometimes it takes 3-4 days just to get a simple access request approved. Our team can't wait that long, so we've developed our own workarounds. For most access requests, we use shared administrator accounts."""
-        },
-        {
-            "region_id": "JPN-001",
-            "region_name": "Japan",
-            "country": "Japan",
-            "compliance_score": 78,
-            "risk_level": "Medium",
-            "interviewee": "Takeshi Yamamoto",
-            "position": "Compliance Officer",
-            "interview_date": "2024-03-20",
-            "language": "Japanese/English Mix",
-            "transcript_content": """Interviewer: Can you explain your user access management process?
-
-Takeshi: はい、yes. Our process follows global framework but with important Japanese adaptations. In Japan, we have strict local regulations from the Financial Services Agency (FSA) that sometimes conflict with global standards."""
-        },
-        {
-            "region_id": "USA-001",
-            "region_name": "United States",
-            "country": "United States",
-            "compliance_score": 92,
-            "risk_level": "Low",
-            "interviewee": "Jennifer Thompson",
-            "position": "IT Security Director",
-            "interview_date": "2024-03-22",
-            "language": "English",
-            "transcript_content": """Interviewer: Can you describe your current user access management process?
-
-Jennifer: We're actually the pilot region for the new global framework, so we're pretty close to the standard. We've fully implemented the automated provisioning system and our SoD compliance is at 98%."""
-        },
-        {
-            "region_id": "IND-001",
-            "region_name": "India",
-            "country": "India",
-            "compliance_score": 45,
-            "risk_level": "High",
-            "interviewee": "Raj Patel",
-            "position": "Regional Operations Head",
-            "interview_date": "2024-03-25",
-            "language": "English",
-            "transcript_content": """Interviewer: Can you walk me through your user access management process?
-
-Raj: In India, we face some unique challenges. The global system works well for our corporate functions, but our manufacturing plants have different requirements. Many of our plant systems are on-premise and not connected to the global network."""
-        },
-        {
-            "region_id": "UK-001",
-            "region_name": "United Kingdom",
-            "country": "United Kingdom",
-            "compliance_score": 88,
-            "risk_level": "Low",
-            "interviewee": "David Chen",
-            "position": "Risk Manager",
-            "interview_date": "2024-03-28",
-            "language": "English",
-            "transcript_content": """Interviewer: Can you describe your user access management process?
-
-David: We follow the global framework quite closely, with some adaptations for UK regulations. The main difference is our approach to GDPR compliance - we have additional data privacy controls that go beyond the global standard."""
-        }
-    ]
+    regions_data = []
+    csv_file_path = os.path.join(os.path.dirname(__file__), '..', 'demo_data', 'regions.csv')
     
     try:
-        with conn.cursor() as cur:
+        with open(csv_file_path, 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                regions_data.append({
+                    "region_id": row["region_id"],
+                    "region_name": row["region_name"],
+                    "country": row["country"],
+                    "compliance_score": int(row["compliance_score"]),
+                    "risk_level": row["risk_level"],
+                    "interviewee": row["interviewee"],
+                    "position": row["position"],
+                    "interview_date": "2024-03-15",
+                    "language": row.get("language", "English"),
+                    "transcript_content": f"Interview with {row['interviewee']}, {row['position']} at {row['region_name']}. Compliance score: {row['compliance_score']}, Risk level: {row['risk_level']}."
+                })
+        print(f"✅ Loaded {len(regions_data)} regions from CSV")
+    except FileNotFoundError:
+        print(f"❌ CSV file not found: {csv_file_path}")
+        return False
+    except Exception as e:
+        print(f"❌ Error reading CSV file: {e}")
+        return False
+    
+    try:
+        # Check if using SQLite or PostgreSQL
+        is_sqlite = isinstance(conn, sqlite3.Connection)
+        
+        if is_sqlite:
+            cur = conn.cursor()
             for region in regions_data:
+                # SQLite uses INSERT OR REPLACE
                 cur.execute("""
-                    INSERT INTO regions (region_id, region_name, country, compliance_score, risk_level, interviewee, position, interview_date, language, transcript_content)
-                    VALUES (%(region_id)s, %(region_name)s, %(country)s, %(compliance_score)s, %(risk_level)s, %(interviewee)s, %(position)s, %(interview_date)s, %(language)s, %(transcript_content)s)
-                    ON CONFLICT (region_id) DO UPDATE SET
-                        region_name = EXCLUDED.region_name,
-                        country = EXCLUDED.country,
-                        compliance_score = EXCLUDED.compliance_score,
-                        risk_level = EXCLUDED.risk_level,
-                        interviewee = EXCLUDED.interviewee,
-                        position = EXCLUDED.position,
-                        interview_date = EXCLUDED.interview_date,
-                        language = EXCLUDED.language,
-                        transcript_content = EXCLUDED.transcript_content,
-                        updated_at = CURRENT_TIMESTAMP
-                """, region)
-            
-            conn.commit()
-            print("✅ Regions seeded successfully")
-            return True
+                    INSERT OR REPLACE INTO regions (region_id, region_name, country, compliance_score, risk_level, interviewee, position, interview_date, language, transcript_content)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (region["region_id"], region["region_name"], region["country"], region["compliance_score"], 
+                      region["risk_level"], region["interviewee"], region["position"], region["interview_date"], 
+                      region["language"], region["transcript_content"]))
+        else:
+            # PostgreSQL with context manager
+            with conn.cursor() as cur:
+                for region in regions_data:
+                    cur.execute("""
+                        INSERT INTO regions (region_id, region_name, country, compliance_score, risk_level, interviewee, position, interview_date, language, transcript_content)
+                        VALUES (%(region_id)s, %(region_name)s, %(country)s, %(compliance_score)s, %(risk_level)s, %(interviewee)s, %(position)s, %(interview_date)s, %(language)s, %(transcript_content)s)
+                        ON CONFLICT (region_id) DO UPDATE SET
+                            region_name = EXCLUDED.region_name,
+                            country = EXCLUDED.country,
+                            compliance_score = EXCLUDED.compliance_score,
+                            risk_level = EXCLUDED.risk_level,
+                            interviewee = EXCLUDED.interviewee,
+                            position = EXCLUDED.position,
+                            interview_date = EXCLUDED.interview_date,
+                            language = EXCLUDED.language,
+                            transcript_content = EXCLUDED.transcript_content,
+                            updated_at = CURRENT_TIMESTAMP
+                    """, region)
+        
+        conn.commit()
+        print("✅ Regions seeded successfully")
+        return True
             
     except Exception as e:
         print(f"❌ Error seeding regions: {e}")
@@ -456,16 +526,38 @@ def seed_framework():
     }
     
     try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                INSERT INTO framework (process_name, process_id, version, effective_date, business_context, process_map, risk_register, mitigating_controls, compliance_requirements)
-                VALUES (%(process_name)s, %(process_id)s, %(version)s, %(effective_date)s, %(business_context)s, %(process_map)s, %(risk_register)s, %(mitigating_controls)s, %(compliance_requirements)s)
-                ON CONFLICT DO NOTHING
-            """, framework_data)
+        # Check if using SQLite or PostgreSQL
+        is_sqlite = isinstance(conn, sqlite3.Connection)
+        
+        if is_sqlite:
+            cur = conn.cursor()
+            # Convert JSON data to strings for SQLite
+            framework_data_sqlite = framework_data.copy()
+            framework_data_sqlite['process_map'] = json.dumps(framework_data_sqlite['process_map'])
+            framework_data_sqlite['risk_register'] = json.dumps(framework_data_sqlite['risk_register'])
+            framework_data_sqlite['mitigating_controls'] = json.dumps(framework_data_sqlite['mitigating_controls'])
+            framework_data_sqlite['compliance_requirements'] = json.dumps(framework_data_sqlite['compliance_requirements'])
             
-            conn.commit()
-            print("✅ Framework seeded successfully")
-            return True
+            cur.execute("""
+                INSERT OR IGNORE INTO framework (process_name, process_id, version, effective_date, business_context, process_map, risk_register, mitigating_controls, compliance_requirements)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (framework_data_sqlite['process_name'], framework_data_sqlite['process_id'], 
+                  framework_data_sqlite['version'], framework_data_sqlite['effective_date'], 
+                  framework_data_sqlite['business_context'], framework_data_sqlite['process_map'],
+                  framework_data_sqlite['risk_register'], framework_data_sqlite['mitigating_controls'],
+                  framework_data_sqlite['compliance_requirements']))
+        else:
+            # PostgreSQL with context manager
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO framework (process_name, process_id, version, effective_date, business_context, process_map, risk_register, mitigating_controls, compliance_requirements)
+                    VALUES (%(process_name)s, %(process_id)s, %(version)s, %(effective_date)s, %(business_context)s, %(process_map)s, %(risk_register)s, %(mitigating_controls)s, %(compliance_requirements)s)
+                    ON CONFLICT DO NOTHING
+                """, framework_data)
+        
+        conn.commit()
+        print("✅ Framework seeded successfully")
+        return True
             
     except Exception as e:
         print(f"❌ Error seeding framework: {e}")
