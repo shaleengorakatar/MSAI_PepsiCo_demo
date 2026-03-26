@@ -19,18 +19,22 @@ async def test_baselines():
 @router.get("")
 async def get_baselines() -> List[Dict[str, Any]]:
     """Get baselines from database."""
+    print("🔍 /api/baselines endpoint called")
     try:
         from app.database import get_db_connection
         
+        print("🔄 Getting database connection...")
         conn = get_db_connection()
         if not conn:
             print("❌ Database connection failed for baselines endpoint")
             return []
         
+        print("✅ Database connection successful, executing query...")
         cur = conn.cursor()
         cur.execute("SELECT * FROM baselines ORDER BY baseline_id")
         rows = cur.fetchall()
         
+        print(f"🔍 Query returned {len(rows)} rows")
         # Convert SQLite Row objects to dictionaries
         baselines = [dict(row) for row in rows]
         print(f"✅ Returning {len(baselines)} baselines from database")
@@ -38,10 +42,13 @@ async def get_baselines() -> List[Dict[str, Any]]:
         
     except Exception as e:
         print(f"❌ Error loading baselines from database: {e}")
+        import traceback
+        print(f"❌ Full traceback: {traceback.format_exc()}")
         return []
     finally:
         if 'conn' in locals():
             conn.close()
+            print("🔄 Database connection closed")
 
 
 @router.get("/tools")
