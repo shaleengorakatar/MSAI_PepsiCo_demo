@@ -1,0 +1,757 @@
+{
+  "market_variations": [
+    {
+      "market_code": "DE",
+      "market_name": "Germany",
+      "baseline_id": "BL-001",
+      "language": "de",
+      "overrides": [
+        {
+          "step_number": 2,
+          "field": "responsible_role",
+          "value": "Linienmanager + Betriebsrat",
+          "reason": "German Works Council (Betriebsrat) co-determination requires employee representation in access decisions per BDSG §32"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "IT-Team gewährt genehmigten Zugriff unter BDSG-Datenschutzkonformität und Protokollierungspflicht",
+          "reason": "BDSG requires documented access grants with audit trails and data protection compliance"
+        },
+        {
+          "step_number": 5,
+          "field": "title",
+          "value": "Vierteljährliche Zugriffsberechtigungskontrolle mit Betriebsratbeteiligung",
+          "reason": "German data protection law requires Works Council involvement in access reviews"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "Works Council Notification",
+            "translations": {
+              "de": "Betriebsratbenachrichtigung"
+            }
+          },
+          "description": {
+            "default": "Formal notification to Works Council of all access changes per Mitbestimmung rights",
+            "translations": {
+              "de": "Formelle Benachrichtigung des Betriebsrats über alle Zugriffsänderungen gemäß Mitbestimmungsrechten"
+            }
+          },
+          "responsible_role": "HR Administrator + Betriebsrat",
+          "is_mandatory": true
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Dual approval delays causing business process bottlenecks during critical periods",
+          "severity": "medium",
+          "mitigating_controls": ["Emergency override procedures", "Pre-approved seasonal access templates"]
+        },
+        {
+          "description": "Works Council objections to system access based on employee protection concerns",
+          "severity": "low",
+          "mitigating_controls": ["Documentation templates", "Legal review process"]
+        }
+      ],
+      "notes": {
+        "default": "German market requires Works Council co-determination and enhanced data protection documentation per BDSG",
+        "translations": {
+          "de": "Deutscher Markt erfordert Betriebsrat-Mitbestimmung und erweiterte Datenschutzdokumentation gemäß BDSG"
+        }
+      }
+    },
+    {
+      "market_code": "BR",
+      "market_name": "Brazil",
+      "baseline_id": "BL-001",
+      "language": "pt",
+      "overrides": [
+        {
+          "step_number": 1,
+          "field": "description",
+          "value": "Usuário solicita acesso através do portal com validação CPF e biometria facial",
+          "reason": "Brazilian LGPD requires strong identity verification with CPF integration and biometric validation"
+        },
+        {
+          "step_number": 2,
+          "field": "responsible_role",
+          "value": "Gestor + Comitê de Privacidade LGPD",
+          "reason": "LGPD Article 19 requires privacy committee involvement in access decisions"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "Equipe de TI concede acesso com registro obrigatório em LGPD audit trail",
+          "reason": "LGPD mandates comprehensive audit trails for all data processing activities"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "CPF Identity Validation",
+            "translations": {
+              "pt": "Validação de Identidade CPF"
+            }
+          },
+          "description": {
+            "default": "Cross-reference CPF with government database and validate identity documents",
+            "translations": {
+              "pt": "Referência cruzada de CPF com banco de dados governamental e validação de documentos de identidade"
+            }
+          },
+          "responsible_role": "Security Officer + Receita Federal Integration",
+          "is_mandatory": true
+        },
+        {
+          "step_number": 7,
+          "title": {
+            "default": "ANPD Notification",
+            "translations": {
+              "pt": "Notificação ANPD"
+            }
+          },
+          "description": {
+            "default": "Report high-risk access grants to National Data Protection Authority",
+            "translations": {
+              "pt": "Reportar concessões de acesso de alto risco à Autoridade Nacional de Proteção de Dados"
+            }
+          },
+          "responsible_role": "DPO (Encarregado de Dados)",
+          "is_mandatory": false
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Shared credential culture among Brazilian employees leading to unauthorized access",
+          "severity": "high",
+          "mitigating_controls": ["Biometric authentication", "Regular access pattern analysis", "Cultural training programs"]
+        },
+        {
+          "description": "CPF fraud attempts in access requests using stolen or synthetic identities",
+          "severity": "critical",
+          "mitigating_controls": ["Government database integration", "Document verification", "AI-based fraud detection"]
+        }
+      ],
+      "notes": {
+        "default": "Brazilian market requires LGPD compliance, CPF integration, and addresses shared credential cultural practices",
+        "translations": {
+          "pt": "Mercado brasileiro requer conformidade LGPD, integração CPF e aborda práticas culturais de credenciais compartilhadas"
+        }
+      }
+    },
+    {
+      "market_code": "JP",
+      "market_name": "Japan",
+      "baseline_id": "BL-001",
+      "language": "ja",
+      "overrides": [
+        {
+          "step_number": 2,
+          "field": "description",
+          "value": "上長がアクセス要求を承認、ハンコと電子署名の両方を必要",
+          "reason": "Japanese business culture requires both physical hanko stamps and digital signatures for formal approvals"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "ITチームが承認されたアクセスを付与、J-SOX文書化要件を満たす",
+          "reason": "J-SOX requires comprehensive documentation and segregation of duties evidence"
+        },
+        {
+          "step_number": 4,
+          "field": "responsible_role",
+          "value": "要求者 + 部門長",
+          "reason": "Japanese hierarchical structure requires department head involvement in verification"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "Hanko Stamp Approval",
+            "translations": {
+              "ja": "判子承認"
+            }
+          },
+          "description": {
+            "default": "Physical hanko stamp application on access request forms for legal validity",
+            "translations": {
+              "ja": "アクセス要求フォームへの物理的な判子押印による法的有効性"
+            }
+          },
+          "responsible_role": "部門長",
+          "is_mandatory": true
+        },
+        {
+          "step_number": 7,
+          "title": {
+            "default": "J-SOX Documentation",
+            "translations": {
+              "ja": "J-SOX文書化"
+            }
+          },
+          "description": {
+            "default": "Create J-SOX compliance documentation for all access changes",
+            "translations": {
+              "ja": "すべてのアクセス変更についてJ-SOXコンプライアンス文書を作成"
+            }
+          },
+          "responsible_role": "内部監査担当",
+          "is_mandatory": true
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Hanko stamp delays causing access provisioning bottlenecks during month-end closing",
+          "severity": "medium",
+          "mitigating_controls": ["Digital hanko alternatives", "Pre-approved seasonal templates", "Emergency escalation procedures"]
+        },
+        {
+          "description": "Cultural reluctance to question superior access requests leading to inappropriate permissions",
+          "severity": "medium",
+          "mitigating_controls": ["Anonymous reporting channels", "Automated SoD checks", "Regular access audits"]
+        }
+      ],
+      "notes": {
+        "default": "Japanese market requires hanko stamp approvals, J-SOX documentation, and addresses hierarchical cultural dynamics",
+        "translations": {
+          "ja": "日本市場は判子承認、J-SOX文書化、階層的文化ダイナミクスへの対応が必要"
+        }
+      }
+    },
+    {
+      "market_code": "US",
+      "market_name": "United States",
+      "baseline_id": "BL-001",
+      "language": "en",
+      "overrides": [
+        {
+          "step_number": 2,
+          "field": "description",
+          "value": "Line manager reviews and approves access request with SOX 404 control validation",
+          "reason": "US SOX 404 requires manager attestation on access controls and segregation of duties"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "IT team grants access with NIST 800-53 compliance logging and audit trail",
+          "reason": "NIST 800-53 mandates comprehensive audit trails and access control documentation"
+        },
+        {
+          "step_number": 5,
+          "field": "title",
+          "value": "Quarterly Access Review with SOX Attestation",
+          "reason": "SOX 404 requires quarterly management attestation on control effectiveness"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "SOX 404 Control Testing",
+            "translations": {}
+          },
+          "description": {
+            "default": "Perform quarterly SOX control testing on access management processes",
+            "translations": {}
+          },
+          "responsible_role": "Internal Auditor + SOX Coordinator",
+          "is_mandatory": true
+        },
+        {
+          "step_number": 7,
+          "title": {
+            "default": "NIST Compliance Validation",
+            "translations": {}
+          },
+          "description": {
+            "default": "Validate access controls against NIST 800-53 requirements quarterly",
+            "translations": {}
+          },
+          "responsible_role": "CISO + Compliance Team",
+          "is_mandatory": true
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "SOX 404 material weakness findings from inadequate access control documentation",
+          "severity": "critical",
+          "mitigating_controls": ["Automated evidence collection", "Quarterly control testing", "External audit preparation"]
+        },
+        {
+          "description": "State-specific data privacy law violations (CCPA, NYDFS, etc.) in access management",
+          "severity": "high",
+          "mitigating_controls": ["Geographic access restrictions", "State law compliance matrix", "Privacy impact assessments"]
+        }
+      ],
+      "notes": {
+        "default": "US market requires SOX 404 compliance, NIST 800-53 alignment, and addresses multi-state privacy law complexity",
+        "translations": {}
+      }
+    },
+    {
+      "market_code": "IN",
+      "market_name": "India",
+      "baseline_id": "BL-001",
+      "language": "hi",
+      "overrides": [
+        {
+          "step_number": 1,
+          "field": "description",
+          "value": "उपयोगकर्ता सेल्फ-सर्विस पोर्टल के माध्यम से एक्सेस अनुरोध करता है, Aadhaar और PAN के साथ पहचान",
+          "reason": "Indian IT Act and Aadhaar integration require government ID verification for digital access"
+        },
+        {
+          "step_number": 2,
+          "field": "responsible_role",
+          "value": "प्रबंधक + डेटा सुरक्षा अधिकारी (DPO)",
+          "reason": "India's Personal Data Protection Bill requires DPO involvement in access decisions"
+        },
+        {
+          "step_number": 5,
+          "field": "title",
+          "value": "त्रैमासिक एक्सेस समीक्षा और SEPI अनुपालन",
+          "reason": "SEBI and RBI regulations require quarterly access reviews for financial systems"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "Aadhaar-PAN Link Verification",
+            "translations": {
+              "hi": "आधार-पैन लिंक सत्यापन"
+            }
+          },
+          "description": {
+            "default": "Verify Aadhaar-PAN linkage and cross-reference with government databases",
+            "translations": {
+              "hi": "आधार-पैन लिंक सत्यापन और सरकारी डेटाबेस के साथ क्रॉस-रेफरेंस"
+            }
+          },
+          "responsible_role": "IT Security + UIDAI Integration",
+          "is_mandatory": true
+        },
+        {
+          "step_number": 7,
+          "title": {
+            "default": "RBI/SEBI Compliance Check",
+            "translations": {
+              "hi": "आरबीआई/सेबी अनुपालन जांच"
+            }
+          },
+          "description": {
+            "default": "Validate access compliance with RBI and SEBI regulations for financial systems",
+            "translations": {
+              "hi": "वित्तीय प्रणालियों के लिए आरबीआई और सेबी विनियमों के साथ एक्सेस अनुपालन की पुष्टि करें"
+            }
+          },
+          "responsible_role": "Compliance Officer",
+          "is_mandatory": false
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Disconnected plant systems in manufacturing facilities with no central access management",
+          "severity": "high",
+          "mitigating_controls": ["Legacy system integration", "Manual access logs", "Periodic physical audits"]
+        },
+        {
+          "description": "Aadhaar authentication failures during access requests due to system connectivity issues",
+          "severity": "medium",
+          "mitigating_controls": ["Alternative authentication methods", "Offline verification procedures", "Backup identity systems"]
+        }
+      ],
+      "notes": {
+        "default": "Indian market requires Aadhaar/PAN integration, SEBI/RBI compliance, and addresses disconnected plant system challenges",
+        "translations": {
+          "hi": "भारतीय बाजार को आधार/पैन एकीकरण, सेबी/आरबीआई अनुपालन और डिस्कनेक्टेड प्लांट सिस्टम चुनौतियों को संबोधित करने की आवश्यकता है"
+        }
+      }
+    },
+    {
+      "market_code": "GB",
+      "market_name": "United Kingdom",
+      "baseline_id": "BL-001",
+      "language": "en",
+      "overrides": [
+        {
+          "step_number": 2,
+          "field": "description",
+          "value": "Line manager reviews and approves access request with GDPR DPIA consideration",
+          "reason": "UK GDPR requires Data Protection Impact Assessment for high-risk access grants"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "IT team grants access with FCA record-keeping and ICO audit trail requirements",
+          "reason": "FCA handbook and ICO guidelines require comprehensive access documentation"
+        },
+        {
+          "step_number": 5,
+          "field": "title",
+          "value": "Quarterly Access Review with ICO Reporting",
+          "reason": "UK ICO requires documented access reviews with breach reporting capability"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "FCA Compliance Validation",
+            "translations": {}
+          },
+          "description": {
+            "default": "Validate access controls against FCA Senior Management Arrangements Principles",
+            "translations": {}
+          },
+          "responsible_role": "Compliance Officer + FCA Liaison",
+          "is_mandatory": false
+        },
+        {
+          "step_number": 7,
+          "title": {
+            "default": "GDPR DPIA Assessment",
+            "translations": {}
+          },
+          "description": {
+            "default": "Conduct GDPR Data Protection Impact Assessment for high-risk access",
+            "translations": {}
+          },
+          "responsible_role": "DPO + Data Protection Officer",
+          "is_mandatory": false
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Brexit-related data transfer complications in cross-border access management",
+          "severity": "medium",
+          "mitigating_controls": ["UK-EU data transfer agreements", "Local data residency", "Transfer impact assessments"]
+        },
+        {
+          "description": "FCA regulatory action for inadequate access control systems in financial institutions",
+          "severity": "high",
+          "mitigating_controls": ["FCA compliance frameworks", "Regular regulatory reporting", "External audit validation"]
+        }
+      ],
+      "notes": {
+        "default": "UK market requires GDPR/FCA overlay compliance, addresses Brexit data transfer challenges, and enhanced regulatory reporting",
+        "translations": {}
+      }
+    },
+    {
+      "market_code": "CN",
+      "market_name": "China",
+      "baseline_id": "BL-001",
+      "language": "zh",
+      "overrides": [
+        {
+          "step_number": 1,
+          "field": "description",
+          "value": "用户通过自服务门户申请访问，需进行实名认证和政府身份验证",
+          "reason": "China's Cybersecurity Law requires real-name verification and government ID authentication"
+        },
+        {
+          "step_number": 2,
+          "field": "responsible_role",
+          "value": "直线经理 + 网络安全办公室",
+          "reason": "Chinese Cybersecurity Law requires cybersecurity office involvement in access decisions"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "IT团队授予访问权限，需符合网络安全法数据本地化要求",
+          "reason": "China's data localization laws require access controls to enforce data residency"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "Real-Name Authentication",
+            "translations": {
+              "zh": "实名认证"
+            }
+          },
+          "description": {
+            "default": "Verify real-name identity against government database and mobile number registration",
+            "translations": {
+              "zh": "根据政府数据库和手机号码注册验证实名身份"
+            }
+          },
+          "responsible_role": "网络安全管理员 + 公安系统对接",
+          "is_mandatory": true
+        },
+        {
+          "step_number": 7,
+          "title": {
+            "default": "Data Residency Validation",
+            "translations": {
+              "zh": "数据驻留验证"
+            }
+          },
+          "description": {
+            "default": "Ensure access complies with Chinese data localization and cross-border transfer restrictions",
+            "translations": {
+              "zh": "确保访问符合中国数据本地化和跨境传输限制"
+            }
+          },
+          "responsible_role": "数据保护官 + 网安办",
+          "is_mandatory": true
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Government surveillance requirements conflicting with corporate data protection policies",
+          "severity": "high",
+          "mitigating_controls": ["Data encryption standards", "Access segregation", "Legal compliance frameworks"]
+        },
+        {
+          "description": "Data localization enforcement causing system architecture constraints for multinational companies",
+          "severity": "medium",
+          "mitigating_controls": ["Local data centers", "Hybrid cloud architecture", "Access routing controls"]
+        }
+      ],
+      "notes": {
+        "default": "Chinese market requires real-name authentication, data localization compliance, and addresses government surveillance requirements",
+        "translations": {
+          "zh": "中国市场需要实名认证、数据本地化合规，并解决政府监控要求"
+        }
+      }
+    },
+    {
+      "market_code": "FR",
+      "market_name": "France",
+      "baseline_id": "BL-001",
+      "language": "fr",
+      "overrides": [
+        {
+          "step_number": 2,
+          "field": "responsible_role",
+          "value": "Manager + CIL (Correspondant Informatique et Libertés)",
+          "reason": "French CNIL requires Data Protection Officer involvement in access decisions"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "L'équipe IT accorde l'accès avec conformité RGPD et journalisation CNIL",
+          "reason": "French CNIL requires GDPR compliance with specific French adaptations and audit trails"
+        },
+        {
+          "step_number": 5,
+          "field": "title",
+          "value": "Revue trimestrielle d'accès avec validation CNIL",
+          "reason": "CNIL requires documented access reviews with French data protection considerations"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "CIL Validation",
+            "translations": {
+              "fr": "Validation CIL"
+            }
+          },
+          "description": {
+            "default": "Data Protection Officer review and validation of high-risk access requests",
+            "translations": {
+              "fr": "Examen et validation par le Correspondant Informatique et Libertés des demandes d'accès à haut risque"
+            }
+          },
+          "responsible_role": "CIL + DPO",
+          "is_mandatory": false
+        },
+        {
+          "step_number": 7,
+          "title": {
+            "default": "French Labor Code Compliance",
+            "translations": {
+              "fr": "Conformité Code du Travail"
+            }
+          },
+          "description": {
+            "default": "Ensure access controls comply with French labor code employee monitoring restrictions",
+            "translations": {
+              "fr": "Assurer que les contrôles d'accès respectent les restrictions de surveillance des employés du Code du travail français"
+            }
+          },
+          "responsible_role": "DRH + Juridique",
+          "is_mandatory": true
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "French labor code restrictions on employee monitoring affecting access control logging",
+          "severity": "medium",
+          "mitigating_controls": ["Employee consent procedures", "Anonymized logging", "Legal review protocols"]
+        },
+        {
+          "description": "CNIL enforcement actions for inadequate data protection in access management systems",
+          "severity": "high",
+          "mitigating_controls": ["CNIL compliance frameworks", "Regular impact assessments", "Legal consultation"]
+        }
+      ],
+      "notes": {
+        "default": "French market requires CNIL compliance, CIL involvement, and addresses labor code monitoring restrictions",
+        "translations": {
+          "fr": "Le marché français exige la conformité CNIL, l'implication du CIL et aborde les restrictions de surveillance du Code du travail"
+        }
+      }
+    },
+    {
+      "market_code": "AU",
+      "market_name": "Australia",
+      "baseline_id": "BL-001",
+      "language": "en",
+      "overrides": [
+        {
+          "step_number": 2,
+          "field": "description",
+          "value": "Line manager reviews and approves access request with Privacy Act consideration",
+          "reason": "Australian Privacy Act 1988 requires privacy impact assessment for access decisions"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "IT team grants access with ASIC compliance logging and OAIC audit trail",
+          "reason": "ASIC requirements and OAIC guidelines mandate comprehensive access documentation"
+        },
+        {
+          "step_number": 5,
+          "field": "title",
+          "value": "Quarterly Access Review with OAIC Reporting",
+          "reason": "OAIC requires documented access reviews with breach reporting capability"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "ASIC Compliance Check",
+            "translations": {}
+          },
+          "description": {
+            "default": "Validate access controls against ASIC regulatory requirements for financial services",
+            "translations": {}
+          },
+          "responsible_role": "Compliance Officer + ASIC Liaison",
+          "is_mandatory": false
+        },
+        {
+          "step_number": 7,
+          "title": {
+            "default": "Notifiable Data Breaches Assessment",
+            "translations": {}
+          },
+          "description": {
+            "default": "Assess access changes for potential notifiable data breach implications",
+            "translations": {}
+          },
+          "responsible_role": "Privacy Officer + Legal Counsel",
+          "is_mandatory": false
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Cross-border data transfer complications with US-based systems under Privacy Act",
+          "severity": "medium",
+          "mitigating_controls": ["Data transfer agreements", "Local data residency", "Transfer impact assessments"]
+        },
+        {
+          "description": "ASIC regulatory action for inadequate access control systems in financial institutions",
+          "severity": "high",
+          "mitigating_controls": ["ASIC compliance frameworks", "Regular regulatory reporting", "External audit validation"]
+        }
+      ],
+      "notes": {
+        "default": "Australian market requires Privacy Act/ASIC compliance, addresses cross-border data transfers, and enhanced breach reporting",
+        "translations": {}
+      }
+    },
+    {
+      "market_code": "CA",
+      "market_name": "Canada",
+      "baseline_id": "BL-001",
+      "language": "en",
+      "overrides": [
+        {
+          "step_number": 2,
+          "field": "description",
+          "value": "Line manager reviews and approves access request with PIPEDA privacy assessment",
+          "reason": "Canadian PIPEDA requires privacy impact assessment for access decisions"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "IT team grants access with provincial privacy law compliance and audit trail",
+          "reason": "Canada has multiple provincial privacy laws requiring compliance documentation"
+        },
+        {
+          "step_number": 5,
+          "field": "title",
+          "value": "Quarterly Access Review with Provincial Compliance",
+          "reason": "Provincial privacy commissioners require documented access reviews"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "Provincial Privacy Validation",
+            "translations": {}
+          },
+          "description": {
+            "default": "Validate access compliance across provincial privacy laws (Quebec, Alberta, BC)",
+            "translations": {}
+          },
+          "responsible_role": "Privacy Officer + Legal Counsel",
+          "is_mandatory": true
+        },
+        {
+          "step_number": 7,
+          "title": {
+            "default": "PIPEDA Compliance Assessment",
+            "translations": {}
+          },
+          "description": {
+            "default": "Conduct PIPEDA compliance assessment for cross-border data access",
+            "translations": {}
+          },
+          "responsible_role": "DPO + Compliance Team",
+          "is_mandatory": true
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Provincial privacy law variations causing compliance complexity across Canadian operations",
+          "severity": "medium",
+          "mitigating_controls": ["Provincial compliance matrix", "Legal review protocols", "Regional access policies"]
+        },
+        {
+          "description": "PIPEDA breach reporting requirements for access control system failures",
+          "severity": "high",
+          "mitigating_controls": ["Breach detection systems", "Rapid response protocols", "Commissioner notification procedures"]
+        }
+      ],
+      "notes": {
+        "default": "Canadian market requires PIPEDA/provincial privacy law compliance, addresses multi-jurisdictional complexity, and enhanced breach reporting",
+        "translations": {}
+      }
+    }
+  ]
+}

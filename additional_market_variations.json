@@ -1,0 +1,540 @@
+{
+  "additional_variations": [
+    {
+      "market_code": "DE",
+      "market_name": "Germany",
+      "baseline_id": "BL-002",
+      "language": "de",
+      "overrides": [
+        {
+          "step_number": 1,
+          "field": "description",
+          "value": "Definition von Konfliktpflichten unter Berücksichtigung deutscher Mitbestimmungsrechte",
+          "reason": "German corporate governance requires Works Council input in SoD rule definition"
+        },
+        {
+          "step_number": 2,
+          "field": "responsible_role",
+          "value": "Systemadministrator + Betriebsrat + Datenschutzbeauftragter",
+          "reason": "BDSG requires multiple stakeholder involvement in SoD configuration"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "Betriebsrat SoD Validation",
+            "translations": {
+              "de": "Betriebsrat SoD-Validierung"
+            }
+          },
+          "description": {
+            "default": "Works Council validation of SoD rules for employee protection compliance",
+            "translations": {
+              "de": "Validierung der SoD-Regeln durch den Betriebsrat zur Einhaltung des Arbeitnehmerschutzes"
+            }
+          },
+          "responsible_role": "Betriebsratvorsitzender",
+          "is_mandatory": true
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "German dual-control requirements causing excessive SoD conflicts in small teams",
+          "severity": "medium",
+          "mitigating_controls": ["Team size exemptions", "Compensating controls", "Manual override procedures"]
+        }
+      ],
+      "notes": {
+        "default": "German SoD requires Works Council validation and addresses dual-control cultural requirements",
+        "translations": {
+          "de": "Deutsche SoD erfordert Betriebsrat-Validierung und berücksichtigt Dual-Control-Kulturanforderungen"
+        }
+      }
+    },
+    {
+      "market_code": "BR",
+      "market_name": "Brazil",
+      "baseline_id": "BL-002",
+      "language": "pt",
+      "overrides": [
+        {
+          "step_number": 1,
+          "field": "description",
+          "value": "Definição de segregação de funções conforme LGPD e normas do Banco Central",
+          "reason": "Brazilian Central Bank requires specific SoD rules for financial institutions"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "Análise de violações de SoD existentes com foco em cultura de compartilhamento",
+          "reason": "Brazilian shared credential culture requires specific SoD analysis approaches"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "Banco Central Validation",
+            "translations": {
+              "pt": "Validação Banco Central"
+            }
+          },
+          "description": {
+            "default": "Central Bank validation of SoD rules for financial system compliance",
+            "translations": {
+              "pt": "Validação pelo Banco Central das regras de SoD para conformidade de sistemas financeiros"
+            }
+          },
+          "responsible_role": "Compliance Officer + Bacen Liaison",
+          "is_mandatory": false
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Brazilian jeitinho culture leading to SoD exceptions for operational convenience",
+          "severity": "high",
+          "mitigating_controls": ["Cultural training programs", "Automated enforcement", "Exception audit trails"]
+        }
+      ],
+      "notes": {
+        "default": "Brazilian SoD addresses Central Bank requirements and cultural jeitinho workaround practices",
+        "translations": {
+          "pt": "SoD brasileiro aborda requisitos do Banco Central e práticas culturais de jeitinho"
+        }
+      }
+    },
+    {
+      "market_code": "JP",
+      "market_name": "Japan",
+      "baseline_id": "BL-002",
+      "language": "ja",
+      "overrides": [
+        {
+          "step_number": 2,
+          "field": "description",
+          "value": "J-SOXルール構成、文化的階層構造を考慮",
+          "reason": "Japanese hierarchical culture affects SoD rule implementation and exception handling"
+        },
+        {
+          "step_number": 4,
+          "field": "description",
+          "value": "文化的階層構造による上長の承認優先で是正計画を作成",
+          "reason": "Japanese respect for authority requires senior management involvement in remediation"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "Cultural Hierarchy Assessment",
+            "translations": {
+              "ja": "文化的階層評価"
+            }
+          },
+          "description": {
+            "default": "Assess SoD conflicts considering Japanese hierarchical decision-making culture",
+            "translations": {
+              "ja": "日本の階層的意志決定文化を考慮してSoDの対立を評価"
+            }
+          },
+          "responsible_role": "部門長 + 内部監査",
+          "is_mandatory": true
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Japanese cultural reluctance to challenge senior authority causing SoD violations",
+          "severity": "medium",
+          "mitigating_controls": ["Anonymous reporting", "Automated enforcement", "Cultural sensitivity training"]
+        }
+      ],
+      "notes": {
+        "default": "Japanese SoD addresses hierarchical culture and J-SOX documentation requirements",
+        "translations": {
+          "ja": "日本のSoDは階層文化とJ-SOX文書化要件に対処"
+        }
+      }
+    },
+    {
+      "market_code": "US",
+      "market_name": "United States",
+      "baseline_id": "BL-002",
+      "language": "en",
+      "overrides": [
+        {
+          "step_number": 1,
+          "field": "description",
+          "value": "Define conflicting duties with SOX 404 and industry-specific regulatory requirements",
+          "reason": "US has industry-specific SoD requirements (banking, healthcare, etc.)"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "Analyze existing access for SoD violations with automated detection tools",
+          "reason": "US market prefers automated SoD detection over manual analysis"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "Industry-Specific Validation",
+            "translations": {}
+          },
+          "description": {
+            "default": "Validate SoD rules against industry-specific regulatory requirements",
+            "translations": {}
+          },
+          "responsible_role": "Industry Compliance Specialist",
+          "is_mandatory": false
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "SOX material weakness from inadequate SoD controls in financial reporting systems",
+          "severity": "critical",
+          "mitigating_controls": ["Automated monitoring", "Quarterly testing", "External audit validation"]
+        }
+      ],
+      "notes": {
+        "default": "US SoD requires industry-specific compliance and automated detection capabilities",
+        "translations": {}
+      }
+    },
+    {
+      "market_code": "IN",
+      "market_name": "India",
+      "baseline_id": "BL-002",
+      "language": "hi",
+      "overrides": [
+        {
+          "step_number": 1,
+          "field": "description",
+          "value": "वित्तीय प्रणालियों के लिए SEBI/आरबीआई अनुपालन के साथ कर्तव्यों का विभाजन परिभाषित करें",
+          "reason": "Indian financial regulations require specific SoD for banking and securities"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "डिस्कनेक्टेड प्लांट सिस्टम में SoD उल्लंघनों का विश्लेषण करें",
+          "reason": "Indian manufacturing often has disconnected systems requiring manual SoD analysis"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "Plant System Integration",
+            "translations": {
+              "hi": "प्लांट सिस्टम एकीकरण"
+            }
+          },
+          "description": {
+            "default": "Integrate disconnected plant systems into centralized SoD monitoring",
+            "translations": {
+              "hi": "डिस्कनेक्टेड प्लांट सिस्टम को केंद्रीकृत SoD मॉनिटरिंग में एकीकृत करें"
+            }
+          },
+          "responsible_role": "Plant Manager + IT Integration",
+          "is_mandatory": false
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Legacy plant systems without proper SoD controls causing compliance gaps",
+          "severity": "high",
+          "mitigating_controls": ["System integration", "Manual controls", "Compensating procedures"]
+        }
+      ],
+      "notes": {
+        "default": "Indian SoD addresses SEBI/RBI requirements and disconnected plant system challenges",
+        "translations": {
+          "hi": "भारतीय SoD SEBI/आरबीआई आवश्यकताओं और डिस्कनेक्टेड प्लांट सिस्टम चुनौतियों को संबोधित करता है"
+        }
+      }
+    },
+    {
+      "market_code": "DE",
+      "market_name": "Germany",
+      "baseline_id": "BL-003",
+      "language": "de",
+      "overrides": [
+        {
+          "step_number": 2,
+          "field": "responsible_role",
+          "value": "Systemadministrator + Datenschutzbeauftragter + Betriebsrat",
+          "reason": "German data protection requires multiple stakeholders in access certification"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "Linienmanager prüfen Team-Zugriffsrechte unter BDSG-Compliance",
+          "reason": "BDSG requires documented manager reviews with privacy compliance validation"
+        },
+        {
+          "step_number": 5,
+          "field": "title",
+          "value": "Dokumentation der Zertifizierungsergebnisse für BDSG-Audits",
+          "reason": "German audits require comprehensive certification documentation"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "BDSG Compliance Validation",
+            "translations": {
+              "de": "BDSG-Compliance-Validierung"
+            }
+          },
+          "description": {
+            "default": "Validate access certification against German data protection requirements",
+            "translations": {
+              "de": "Validierung der Zugangszertifizierung gegen deutsche Datenschutzanforderungen"
+            }
+          },
+          "responsible_role": "Datenschutzbeauftragter",
+          "is_mandatory": true
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Works Council objections delaying access certification for critical business functions",
+          "severity": "medium",
+          "mitigating_controls": ["Pre-approved templates", "Emergency procedures", "Legal escalation"]
+        }
+      ],
+      "notes": {
+        "default": "German access certification requires BDSG compliance and Works Council involvement",
+        "translations": {
+          "de": "Deutsche Zugangszertifizierung erfordert BDSG-Compliance und Betriebsratbeteiligung"
+        }
+      }
+    },
+    {
+      "market_code": "BR",
+      "market_name": "Brazil",
+      "baseline_id": "BL-003",
+      "language": "pt",
+      "overrides": [
+        {
+          "step_number": 1,
+          "field": "description",
+          "value": "Definir escopo e cronograma para campanha de certificação LGPD",
+          "reason": "Brazilian LGPD requires specific certification campaign procedures"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "Gerentes revisam direitos de acesso da equipe com validação LGPD",
+          "reason": "LGPD requires privacy validation in access certification reviews"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "LGPD Impact Assessment",
+            "translations": {
+              "pt": "Avaliação de Impacto LGPD"
+            }
+          },
+          "description": {
+            "default": "Conduct LGPD impact assessment for access certification changes",
+            "translations": {
+              "pt": "Realizar avaliação de impacto LGPD para alterações de certificação de acesso"
+            }
+          },
+          "responsible_role": "Encarregado de Proteção de Dados",
+          "is_mandatory": true
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Manager approval of inappropriate access due to cultural relationship pressures",
+          "severity": "medium",
+          "mitigating_controls": ["Automated SoD checks", "Anonymous review channels", "Cultural training"]
+        }
+      ],
+      "notes": {
+        "default": "Brazilian access certification requires LGPD compliance and addresses cultural relationship dynamics",
+        "translations": {
+          "pt": "Certificação de acesso brasileira requer conformidade LGPD e aborda dinâmicas de relacionamento cultural"
+        }
+      }
+    },
+    {
+      "market_code": "JP",
+      "market_name": "Japan",
+      "baseline_id": "BL-003",
+      "language": "ja",
+      "overrides": [
+        {
+          "step_number": 2,
+          "field": "description",
+          "value": "現在のアクセス割り当てを収集、J-SOX文書化要件を満たす",
+          "reason": "J-SOX requires comprehensive documentation of access inventories"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "上長がチームアクセス権を確認、文化的階層を尊重",
+          "reason": "Japanese hierarchy requires senior manager involvement in certifications"
+        },
+        {
+          "step_number": 4,
+          "field": "responsible_role",
+          "value": "システム管理者 + 部門長",
+          "reason": "Japanese process requires both IT and business leadership in remediation"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "J-SOX Documentation",
+            "translations": {
+              "ja": "J-SOX文書化"
+            }
+          },
+          "description": {
+            "default": "Create comprehensive J-SOX documentation for certification process",
+            "translations": {
+              "ja": "認証プロセスのための包括的なJ-SOX文書を作成"
+            }
+          },
+          "responsible_role": "内部監査担当",
+          "is_mandatory": true
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "Cultural reluctance to question superior access during certification reviews",
+          "severity": "medium",
+          "mitigating_controls": ["Anonymous reporting", "Automated validation", "Cultural sensitivity training"]
+        }
+      ],
+      "notes": {
+        "default": "Japanese access certification requires J-SOX documentation and addresses hierarchical cultural dynamics",
+        "translations": {
+          "ja": "日本のアクセス認証はJ-SOX文書化を必要とし、階層的文化ダイナミクスに対処"
+        }
+      }
+    },
+    {
+      "market_code": "US",
+      "market_name": "United States",
+      "baseline_id": "BL-003",
+      "language": "en",
+      "overrides": [
+        {
+          "step_number": 1,
+          "field": "description",
+          "value": "Define scope and schedule for access review with SOX 404 control validation",
+          "reason": "US SOX 404 requires specific control validation in certification scope"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "Line managers review team access rights with SOX attestation requirements",
+          "reason": "SOX requires manager attestation on control effectiveness"
+        },
+        {
+          "step_number": 5,
+          "field": "title",
+          "value": "SOX Evidence Collection and Attestation",
+          "reason": "SOX requires comprehensive evidence collection and management attestation"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "SOX Control Testing",
+            "translations": {}
+          },
+          "description": {
+            "default": "Conduct SOX control testing on access certification process",
+            "translations": {}
+          },
+          "responsible_role": "Internal Auditor + SOX Coordinator",
+          "is_mandatory": true
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "SOX material weakness from inadequate access certification documentation",
+          "severity": "critical",
+          "mitigating_controls": ["Automated evidence collection", "Quarterly testing", "External audit preparation"]
+        }
+      ],
+      "notes": {
+        "default": "US access certification requires SOX 404 compliance with comprehensive attestation and evidence collection",
+        "translations": {}
+      }
+    },
+    {
+      "market_code": "GB",
+      "market_name": "United Kingdom",
+      "baseline_id": "BL-003",
+      "language": "en",
+      "overrides": [
+        {
+          "step_number": 1,
+          "field": "description",
+          "value": "Define scope and schedule for access review with GDPR DPIA requirements",
+          "reason": "UK GDPR requires Data Protection Impact Assessment for certification scope"
+        },
+        {
+          "step_number": 3,
+          "field": "description",
+          "value": "Line managers review team access rights with FCA compliance validation",
+          "reason": "FCA requires compliance validation in access reviews for financial services"
+        },
+        {
+          "step_number": 5,
+          "field": "title",
+          "value": "Evidence Collection with ICO Reporting Requirements",
+          "reason": "ICO requires documented evidence with breach reporting capability"
+        }
+      ],
+      "additional_steps": [
+        {
+          "step_number": 6,
+          "title": {
+            "default": "FCA Compliance Validation",
+            "translations": {}
+          },
+          "description": {
+            "default": "Validate access certification against FCA requirements",
+            "translations": {}
+          },
+          "responsible_role": "Compliance Officer + FCA Liaison",
+          "is_mandatory": false
+        }
+      ],
+      "removed_step_numbers": [],
+      "additional_risks": [
+        {
+          "description": "ICO enforcement for inadequate access certification privacy protections",
+          "severity": "high",
+          "mitigating_controls": ["Privacy impact assessments", "ICO consultation", "Enhanced documentation"]
+        }
+      ],
+      "notes": {
+        "default": "UK access certification requires GDPR/FCA compliance with enhanced privacy protections and reporting",
+        "translations": {}
+      }
+    }
+  ]
+}
