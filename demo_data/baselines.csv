@@ -1,0 +1,21 @@
+baseline_id,baseline_name,description,maturity_level,control_coverage
+BL-001,Core Access Management,Fundamental user access provisioning and identity verification,Optimized,95%
+BL-002,Segregation of Duties,Prevent conflicts of interest through role separation,Managed,88%
+BL-003,Access Certification,Regular access reviews and certification cycles,Defined,82%
+BL-004,Emergency Access,Urgent access procedures for emergency situations,Managed,75%
+BL-005,Privileged Access Management,Control over administrative and privileged accounts,Optimized,92%
+BL-006,User Lifecycle Management,Complete user access from hire to terminate,Managed,85%
+BL-007,System Access Monitoring,Real-time monitoring and alerting of access events,Defined,78%
+BL-008,Data Classification,Classification and handling of sensitive data,Initial,65%
+BL-009,Multi-Factor Authentication,Strong authentication for critical systems,Optimized,98%
+BL-010,Password Management,Secure password policies and management,Managed,87%
+BL-011,Application Access Control,Access control for business applications,Defined,80%
+BL-012,Database Access Control,Database access and privilege management,Managed,83%
+BL-013,Network Access Control,Network segmentation and access control,Defined,76%
+BL-014,Cloud Access Management,Cloud service access and identity management,Initial,70%
+BL-015,Remote Access Control,Secure remote access policies and controls,Managed,81%
+BL-016,Third-Party Access,Access control for vendors and partners,Defined,72%
+BL-017,Access Review Workflow,Formalized access review and approval process,Managed,85%
+BL-018,Access Violation Monitoring,Detection and response to access violations,Defined,68%
+BL-019,Compliance Reporting,Access control compliance reporting,Initial,60%
+BL-020,Risk Assessment,Access-related risk assessment and mitigation,Defined,74%

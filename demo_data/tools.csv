@@ -1,0 +1,43 @@
+tool_id,tool_name,tool_type,description,vendor,category,status
+SAP-001,SAP GRC Access Control,Compliance Management,Automated SoD analysis and compliance monitoring,SAP,ERP,Active
+ORCL-001,Oracle Identity Manager,Identity Management,Enterprise provisioning and identity governance,Oracle,Identity,Active
+MSFT-001,Microsoft Azure AD,Identity Management,Cloud-based identity and access management,Microsoft,Cloud,Active
+IBM-001,IBM Security Verify,Identity Management,Enterprise single sign-on and MFA,IBM,Identity,Active
+AWS-001,AWS IAM,Cloud Security,Cloud service access management,AWS,Cloud,Active
+SALES-001,Salesforce Identity,Identity Management,Salesforce user access and permissions,Salesforce,CRM,Active
+WORK-001,Okta SSO,Identity Management,Enterprise single sign-on solution,Okta,Identity,Active
+PING-001,Ping Identity,Identity Management,Federated identity management,Ping,Identity,Active
+CYBER-001,CyberArk,PAM,Privileged access management and vaulting,CyberArk,Security,Active
+ONE-001,OneLogin,Identity Management,Cloud identity and access management,OneLogin,Identity,Active
+DUO-001,Duo Security,MFA,Multi-factor authentication solution,Duo,Security,Active
+RSA-001,RSA SecurID,MFA,Hardware and software token authentication,RSA,Security,Active
+CISCO-001,Cisco ISE,Network Security,Network access control and policy enforcement,Cisco,Network,Active
+FORT-001,Fortinet NAC,Network Security,Network access control solution,Fortinet,Network,Active
+PALO-001,Palo Alto Prisma,Cloud Security,Cloud security posture management,Palo Alto,Cloud,Active
+VMW-001,VMware Workspace ONE,Identity Management,Digital workspace and identity management,VMware,Identity,Active
+GOOG-001,Google Cloud IAM,Cloud Security,Google Cloud identity and access management,Google,Cloud,Active
+SERV-001,ServiceNow ITOM,IT Service Management,IT operations and service management,ServiceNow,ITSM,Active
+COG-001,Cognito Identity,Identity Management,Amazon Cognito user pools,AWS,Cloud,Active
+AUTH-001,Auth0,Identity Management,Authentication and authorization platform,Auth0,Identity,Active
+SPLK-001,Splunk SIEM,Security Monitoring,Security information and event management,Splunk,Security,Active
+IBM-002,IBM QRadar,Security Monitoring,Security intelligence and analytics,IBM,Security,Active
+MICR-001,Microsoft Sentinel,Security Monitoring,Cloud-native SIEM solution,Microsoft,Cloud,Active
+NOV-001,Novell Identity Manager,Identity Management,Legacy identity management solution,Novell,Identity,Legacy
+CA-001,CA Identity Manager,Identity Management,Enterprise identity governance,Broadcom,Identity,Legacy
+ORCL-002,Oracle Access Manager,Identity Management,Web access management,Oracle,Identity,Active
+SAP-002,SAP SuccessFactors,HR System,HR and talent management system,SAP,HR,Active
+WORK-002,Workday,HR System,Cloud-based HR and finance platform,Workday,HR,Active
+ADP-001,ADP Workforce Now,HR System,HR and payroll management,ADP,HR,Active
+ULT-001,Ultimate Software,HR System,HR and payroll solution,Ultimate,HR,Active
+KRON-001,Kronos Workforce,HR System,Workforce management solution,Kronos,HR,Active
+SAP-003,SAP Ariba,Procurement,Procurement and supply chain management,SAP,Procurement,Active
+COUP-001,Coupa,Procurement,Spend management platform,Coupa,Procurement,Active
+JAG-001,Jaggaer,Procurement,Strategic sourcing and procurement,Jaggaer,Procurement,Active
+SAP-004,SAP Concur,Expense Management,Travel and expense management,SAP,Finance,Active
+CERT-001,Certify,Expense Management,Travel and expense reporting,Certify,Finance,Active
+EXP-001,Expensify,Expense Management,Expense management solution,Expensify,Finance,Active
+ORCL-003,Oracle Financials,ERP,Financial management system,Oracle,ERP,Active
+SAP-005,SAP S/4HANA,ERP,Enterprise resource planning,SAP,ERP,Active
+MICR-002,Microsoft Dynamics 365,ERP,Business management solution,Microsoft,ERP,Active
+INFOR-001,Infor CloudSuite,ERP,Industry-specific ERP solution,Infor,ERP,Active
+NETS-001,Netsuite,ERP,Cloud-based business management,Oracle,ERP,Active

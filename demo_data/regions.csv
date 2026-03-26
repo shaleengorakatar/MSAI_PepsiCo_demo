@@ -1,0 +1,54 @@
+region_id,region_name,country,compliance_score,risk_level,interviewee,position,language
+GER-001,Germany,Germany,85,Low,Hans Mueller,Site Manager,German
+GER-002,Bavaria,Germany,82,Low,Anna Schmidt,Compliance Officer,German
+GER-003,Berlin,Germany,88,Low,Klaus Weber,Audit Manager,German
+BRA-001,São Paulo,Brazil,35,Critical,Carlos Silva,Operations Manager,Portuguese
+BRA-002,Rio de Janeiro,Brazil,42,High,Maria Santos,Safety Manager,Portuguese
+BRA-003,Brasília,Brazil,38,High,João Costa,Regional Director,Portuguese
+JPN-001,Tokyo,Japan,78,Medium,Tanaka Ken,Compliance Officer,Japanese
+JPN-002,Osaka,Japan,75,Medium,Yuki Yamamoto,Site Manager,Japanese
+JPN-003,Kyoto,Japan,80,Medium,Sato Hiroshi,Audit Manager,Japanese
+USA-001,New York,USA,92,Low,John Smith,Audit Manager,English
+USA-002,California,USA,89,Low,Sarah Johnson,Compliance Officer,English
+USA-003,Texas,USA,86,Low,Michael Brown,Operations Manager,English
+IND-001,Mumbai,India,45,High,Raj Patel,Compliance Officer,English
+IND-002,Bangalore,India,42,High,Priya Sharma,Safety Manager,English
+IND-003,Delhi,India,48,High,Amit Kumar,Regional Director,English
+UK-001,London,UK,88,Low,James Wilson,Regional Director,English
+UK-002,Manchester,UK,85,Low,Emma Thompson,Compliance Officer,English
+UK-003,Glasgow,UK,90,Low,Robert Campbell,Audit Manager,English
+FRA-001,Paris,France,83,Low,Pierre Dubois,Site Manager,French
+FRA-002,Lyon,France,80,Low,Marie Laurent,Compliance Officer,French
+CAN-001,Toronto,Canada,87,Low,David Lee,Operations Manager,English
+CAN-002,Vancouver,Canada,84,Low,Julie Chen,Compliance Officer,English
+AUS-001,Sydney,Australia,79,Medium,James Taylor,Site Manager,English
+AUS-002,Melbourne,Australia,76,Medium,Sophie Martin,Audit Manager,English
+MEX-001,Mexico City,Mexico,55,Medium,Carlos Rodriguez,Compliance Officer,Spanish
+MEX-002,Monterrey,Mexico,52,Medium,Ana Garcia,Safety Manager,Spanish
+ARG-001,Buenos Aires,Argentina,58,Medium,Diego Lopez,Operations Manager,Spanish
+CHL-001,Santiago,Chile,61,Medium,Roberto Silva,Regional Director,Spanish
+COL-001,Bogotá,Colombia,56,Medium,Juan Martinez,Compliance Officer,Spanish
+PER-001,Lima,Peru,53,Medium,Carlos Fernandez,Safety Manager,Spanish
+NLD-001,Amsterdam,Netherlands,91,Low,Erik Jansen,Site Manager,Dutch
+NLD-002,Rotterdam,Netherlands,89,Low,Lisa de Vries,Compliance Officer,Dutch
+BEL-001,Brussels,Belgium,87,Low,Jean-Pierre Dubois,Audit Manager,French
+SWE-001,Stockholm,Sweden,92,Low,Lars Andersson,Regional Director,Swedish
+NOR-001,Oslo,Norway,90,Low,Olav Hansen,Site Manager,Norwegian
+DNK-001,Copenhagen,Denmark,88,Low,Mette Nielsen,Compliance Officer,Danish
+FIN-001,Helsinki,Finland,85,Low,Matti Virtanen,Audit Manager,Finnish
+CHE-001,Zurich,Switzerland,93,Low,Hans Meier,Regional Director,German
+AUT-001,Vienna,Austria,86,Low,Franz Weber,Site Manager,German
+POL-001,Warsaw,Poland,78,Medium,Piotr Kowalski,Compliance Officer,Polish
+CZE-001,Prague,Czech Republic,75,Medium,Jan Novák,Audit Manager,Czech
+HUN-001,Budapest,Hungary,72,Medium,Péter Kovács,Regional Director,Hungarian
+RUS-001,Moscow,Russia,68,Medium,Sergei Ivanov,Site Manager,Russian
+TUR-001,Istanbul,Turkey,65,Medium,Mehmet Yılmaz,Compliance Officer,Turkish
+EGY-001,Cairo,Egypt,62,Medium,Ahmed Hassan,Safety Manager,Arabic
+ZAF-001,Johannesburg,South Africa,71,Medium,Pieter Botha,Operations Manager,Afrikaans
+ZAF-002,Cape Town,South Africa,74,Medium,Johannes van der Merwe,Regional Director,Afrikaans
+NGA-001,Lagos,Nigeria,59,Medium,Adeola Okafor,Compliance Officer,English
+KEN-001,Nairobi,Kenya,63,Medium,Joseph Kamau,Safety Manager,English
+EGY-002,Alexandria,Egypt,60,Medium,Mohamed Ali,Site Manager,Arabic
+MAR-001,Casablanca,Morocco,57,Medium,Youssef Amrani,Compliance Officer,French
+TUN-001,Tunis,Tunisia,54,Medium,Mohamed Ben Ali,Audit Manager,Arabic
+ALG-001,Algiers,Algeria,51,Medium,Abdelkader Belkacem,Regional Director,French
