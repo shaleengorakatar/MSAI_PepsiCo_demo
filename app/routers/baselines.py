@@ -10,10 +10,17 @@ from fastapi import APIRouter
 router = APIRouter(prefix="/baselines", tags=["Baselines"])
 
 
+@router.get("/test")
+async def test_baselines():
+    """Test endpoint to verify baselines work."""
+    return {"status": "working", "message": "Baselines endpoint is functional"}
+
+
 @router.get("")
 async def get_baselines() -> List[Dict[str, Any]]:
     """Get baselines - always works without database."""
-    return [
+    print("✅ Returning baselines from static endpoint (no database)")
+    baselines = [
         {
             "baseline_id": "BL-001",
             "baseline_name": "Core Access Management",
@@ -43,6 +50,8 @@ async def get_baselines() -> List[Dict[str, Any]]:
             "control_coverage": "75%"
         }
     ]
+    print(f"✅ Returning {len(baselines)} baselines")
+    return baselines
 
 
 @router.get("/tools")

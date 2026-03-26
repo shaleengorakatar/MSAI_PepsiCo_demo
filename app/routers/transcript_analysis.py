@@ -21,10 +21,13 @@ async def get_global_framework_endpoint():
     """Get the global framework data for frontend display."""
     from app.services.framework_loader import get_global_framework, is_framework_loaded
     
-    if not is_framework_loaded():
+    framework = get_global_framework()
+    print(f"✅ Framework endpoint returning data with {len(framework.get('baselines', []))} baselines")
+    
+    if not framework:
         raise HTTPException(status_code=503, detail="Global framework not loaded")
     
-    return get_global_framework()
+    return framework
 
 
 @router.get("/interviews")
