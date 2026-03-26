@@ -16,11 +16,17 @@ from app.config import settings
 
 def get_db_connection():
     """Get database connection"""
+    if not settings.database_url:
+        print("❌ DATABASE_URL not configured")
+        return None
+    
     try:
         conn = psycopg2.connect(settings.database_url)
+        print("✅ Database connection successful")
         return conn
     except Exception as e:
         print(f"❌ Database connection error: {e}")
+        print(f"🔍 DATABASE_URL: {settings.database_url[:50]}..." if len(settings.database_url) > 50 else f"🔍 DATABASE_URL: {settings.database_url}")
         return None
 
 

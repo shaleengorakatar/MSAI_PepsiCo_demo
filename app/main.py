@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import analyze, database_api, fit_gap, global_local, monitoring, transcript_analysis, upload, visualizations
+from app.routers import analyze, baselines, database_api, fit_gap, global_local, monitoring, transcript_analysis, upload, visualizations
 
 app = FastAPI(
     title="Control Design Assessment API",
@@ -50,6 +50,7 @@ app.include_router(fit_gap.router, prefix="/api")
 app.include_router(monitoring.router, prefix="/api")
 app.include_router(transcript_analysis.router, prefix="/api")
 app.include_router(database_api.router, prefix="/api")
+app.include_router(baselines.router, prefix="/api")
 app.include_router(visualizations.router, prefix="/api")
 
 
@@ -94,8 +95,30 @@ async def startup_tasks():
 # ---------------------------------------------------------------------------
 @app.get("/health", tags=["Health"])
 async def health_check():
-    return {
+    from app.config import settings
+    
+    health_data = {
         "status": "healthy",
         "service": "control-design-assessment-api",
-        "version": "1.0.0",
+        "version": "1.0.1",
+        "database_configured": bool(settings.database_url),
+        "database_url_length": len(settings.database_url) if settings.database_url else 0
     }
+    
+    # Test database connection
+    if settings.database_url:
+        try:
+            from app.database import get_db_connection
+            conn = get_db_connection()
+            if conn:
+                health_data["database_connected"] = True
+                conn.close()
+            else:
+                health_data["database_connected"] = False
+        except Exception as e:
+            health_data["database_connected"] = False
+            health_data["database_error"] = str(e)
+    else:
+        health_data["database_connected"] = False
+    
+    return health_data

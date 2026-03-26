@@ -7,6 +7,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    # Database
+    database_url: str = ""
+
     # LLM
     llm_provider: str = "openai"
     openai_api_key: str = ""
