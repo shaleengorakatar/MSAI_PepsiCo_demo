@@ -18,12 +18,15 @@ from app.config import settings
 
 def get_db_connection():
     """Get database connection - PostgreSQL or SQLite"""
+    print(f"🔍 DATABASE_URL: {repr(settings.database_url)}")
+    
     if not settings.database_url:
         print("❌ DATABASE_URL not configured")
         return None
     
     # Check if it's a SQLite URL
     if settings.database_url.startswith("sqlite:///"):
+        print("🔄 Detected SQLite URL, attempting SQLite connection...")
         try:
             # Extract database path from SQLite URL
             db_path = settings.database_url.replace("sqlite:///", "")
@@ -31,6 +34,7 @@ def get_db_connection():
                 # Make relative path absolute
                 db_path = os.path.join(os.path.dirname(__file__), '..', db_path)
             
+            print(f"🔍 SQLite path: {db_path}")
             conn = sqlite3.connect(db_path)
             print(f"✅ SQLite database connection successful: {db_path}")
             return conn
@@ -39,6 +43,7 @@ def get_db_connection():
             return None
     
     # Try PostgreSQL
+    print("🔄 Attempting PostgreSQL connection...")
     try:
         conn = psycopg2.connect(settings.database_url)
         print("✅ PostgreSQL database connection successful")
