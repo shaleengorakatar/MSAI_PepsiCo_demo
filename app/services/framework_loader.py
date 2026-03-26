@@ -12,7 +12,7 @@ GLOBAL_FRAMEWORK: Dict[str, Any] = {}
 
 
 def load_global_framework() -> Dict[str, Any]:
-    """Load global framework data from database first, then fallback to JSON."""
+    """Load global framework data with multiple fallbacks."""
     global GLOBAL_FRAMEWORK
     
     if GLOBAL_FRAMEWORK:

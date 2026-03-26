@@ -11,18 +11,59 @@ from app.services.framework_loader import get_global_framework, is_framework_loa
 
 
 def load_mock_interviews() -> Dict[str, Any]:
-    """Load mock interview transcripts from JSON file."""
+    """Load mock interview transcripts from JSON file with fallback."""
     try:
         interviews_path = Path("mock_interviews.json")
         if interviews_path.exists():
             with open(interviews_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         else:
-            print("❌ Mock interviews file not found")
-            return {}
+            print("❌ Mock interviews file not found, using fallback")
+            return get_fallback_interviews()
     except Exception as e:
-        print(f"❌ Error loading mock interviews: {e}")
-        return {}
+        print(f"❌ Error loading mock interviews: {e}, using fallback")
+        return get_fallback_interviews()
+
+
+def get_fallback_interviews() -> Dict[str, Any]:
+    """Fallback interview data when file loading fails."""
+    return {
+        "transcripts": {
+            "A": {
+                "transcript_id": "GER-001",
+                "region": "Germany",
+                "interviewee": "Hans Mueller",
+                "position": "Regional IT Manager",
+                "date": "2024-03-15",
+                "language": "English",
+                "compliance_score": 85,
+                "risk_level": "Low",
+                "content": "Interviewer: Can you walk me through your current user access management process?\n\nHans: Ja, our process is quite standardized, mostly following the global framework. We use the main HRIS system for access requests, and the automated SoD checks work well."
+            },
+            "B": {
+                "transcript_id": "BRA-001",
+                "region": "Brazil",
+                "interviewee": "Carlos Silva",
+                "position": "Operations Manager",
+                "date": "2024-03-18",
+                "language": "Portuguese (translated to English)",
+                "compliance_score": 35,
+                "risk_level": "Critical",
+                "content": "Interviewer: Can you describe your user access management process?\n\nCarlos: Look, to be honest, our process is very different from the global standard. The main system is very slow - sometimes it takes 3-4 days just to get a simple access request approved."
+            },
+            "C": {
+                "transcript_id": "JPN-001",
+                "region": "Japan",
+                "interviewee": "Takeshi Yamamoto",
+                "position": "Compliance Officer",
+                "date": "2024-03-20",
+                "language": "Japanese/English Mix",
+                "compliance_score": 78,
+                "risk_level": "Medium",
+                "content": "Interviewer: Can you explain your user access management process?\n\nTakeshi: はい、yes. Our process follows global framework but with important Japanese adaptations. In Japan, we have strict local regulations from the Financial Services Agency (FSA)."
+            }
+        }
+    }
 
 
 def analyze_transcript(transcript_id: str) -> Dict[str, Any]:
