@@ -15,7 +15,8 @@ router = APIRouter(prefix="/database", tags=["Database"])
 
 @router.get("/baselines")
 async def get_baselines() -> List[Dict[str, Any]]:
-    """Get all baselines from database with fallback."""
+    """Get all baselines from database with fallback - SQLite compatible."""
+    print("🚨 DATABASE_API BASELINES ENDPOINT HIT")
     conn = get_db_connection()
     if not conn:
         # Fallback to static data
@@ -23,14 +24,16 @@ async def get_baselines() -> List[Dict[str, Any]]:
         return get_fallback_baselines()
     
     try:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM baselines ORDER BY baseline_id")
-            baselines = cur.fetchall()
-            result = [dict(baseline) for baseline in baselines]
-            print(f"✅ Loaded {len(result)} baselines from database")
-            return result
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM baselines ORDER BY baseline_id")
+        baselines = cur.fetchall()
+        result = [dict(baseline) for baseline in baselines]
+        print(f"✅ DATABASE_API: Loaded {len(result)} baselines from database")
+        return result
     except Exception as e:
         print(f"❌ Database error, using fallback: {e}")
+        import traceback
+        print(f"❌ Full traceback: {traceback.format_exc()}")
         return get_fallback_baselines()
     finally:
         conn.close()

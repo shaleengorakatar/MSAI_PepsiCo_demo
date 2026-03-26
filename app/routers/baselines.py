@@ -19,7 +19,8 @@ async def test_baselines():
 @router.get("")
 async def get_baselines() -> List[Dict[str, Any]]:
     """Get baselines from database."""
-    print("🔍 /api/baselines endpoint called")
+    print("� BASELINES ENDPOINT HIT - THIS SHOULD ALWAYS APPEAR")
+    print("�🔍 /api/baselines endpoint called")
     try:
         from app.database import get_db_connection
         
