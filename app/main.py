@@ -60,13 +60,15 @@ app.include_router(visualizations.router, prefix="/api")
 @app.on_event("startup")
 async def startup_tasks():
     """Initialize application on startup."""
+    print("🚀 Starting application startup tasks...")
     from app.services.framework_loader import load_global_framework
     from app.database import seed_all_data
     
     try:
         # Seed database with demo data
-        print("🌱 Seeding database with demo data...")
+        print("🌱 Starting database seeding...")
         seed_success = seed_all_data()
+        print(f"🔄 Database seeding result: {seed_success}")
         
         if seed_success:
             # Load framework into memory
