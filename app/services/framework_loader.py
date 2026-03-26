@@ -76,6 +76,11 @@ def load_framework_from_db() -> Dict[str, Any]:
                 if framework_dict.get('compliance_requirements'):
                     framework_dict['compliance_requirements'] = json.loads(framework_dict['compliance_requirements'])
                 
+                # Add baselines from database
+                baselines = get_baselines_from_db()
+                framework_dict['baselines'] = baselines
+                print(f"📊 Loaded {len(baselines)} baselines from SQLite database")
+                
                 return framework_dict
         else:
             # PostgreSQL with RealDictCursor
@@ -130,7 +135,9 @@ def get_baselines_from_db() -> List[Dict[str, Any]]:
             
             # Convert tuples to dictionaries with column names
             columns = [description[0] for description in cur.description]
-            return [dict(zip(columns, row)) for row in rows]
+            baselines = [dict(zip(columns, row)) for row in rows]
+            print(f"🔍 SQLite baselines query returned {len(baselines)} rows")
+            return baselines
         else:
             # PostgreSQL with RealDictCursor
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
