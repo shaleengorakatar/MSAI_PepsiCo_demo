@@ -44,66 +44,38 @@ def load_global_framework() -> Dict[str, Any]:
 
 
 def load_framework_from_db() -> Dict[str, Any]:
-    """Load framework from database (PostgreSQL or SQLite)."""
+    """Load framework from database - simplified like Glencore."""
     try:
         from app.database import get_db_connection
-        import sqlite3
         
         conn = get_db_connection()
         if not conn:
             return {}
         
-        # Check if using SQLite or PostgreSQL
-        is_sqlite = isinstance(conn, sqlite3.Connection)
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM framework ORDER BY updated_at DESC LIMIT 1")
+        row = cur.fetchone()
         
-        if is_sqlite:
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM framework ORDER BY updated_at DESC LIMIT 1")
-            row = cur.fetchone()
+        if row:
+            # SQLite Row object acts like a dictionary
+            framework = dict(row)
             
-            if row:
-                # Convert tuple to dictionary with column names
-                columns = [description[0] for description in cur.description]
-                framework_dict = dict(zip(columns, row))
-                
-                # Parse JSON fields for SQLite
-                if framework_dict.get('process_map'):
-                    framework_dict['process_map'] = json.loads(framework_dict['process_map'])
-                if framework_dict.get('risk_register'):
-                    framework_dict['risk_register'] = json.loads(framework_dict['risk_register'])
-                if framework_dict.get('mitigating_controls'):
-                    framework_dict['mitigating_controls'] = json.loads(framework_dict['mitigating_controls'])
-                if framework_dict.get('compliance_requirements'):
-                    framework_dict['compliance_requirements'] = json.loads(framework_dict['compliance_requirements'])
-                
-                # Add baselines from database
-                baselines = get_baselines_from_db()
-                framework_dict['baselines'] = baselines
-                print(f"📊 Loaded {len(baselines)} baselines from SQLite database")
-                
-                return framework_dict
-        else:
-            # PostgreSQL with RealDictCursor
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute("SELECT * FROM framework ORDER BY updated_at DESC LIMIT 1")
-                row = cur.fetchone()
-                
-                if row:
-                    framework = dict(row)
-                    # Parse JSON fields
-                    if framework.get('process_map'):
-                        framework['process_map'] = json.loads(framework['process_map'])
-                    if framework.get('risk_register'):
-                        framework['risk_register'] = json.loads(framework['risk_register'])
-                    if framework.get('mitigating_controls'):
-                        framework['mitigating_controls'] = json.loads(framework['mitigating_controls'])
-                    if framework.get('compliance_requirements'):
-                        framework['compliance_requirements'] = json.loads(framework['compliance_requirements'])
-                    
-                    # Add baselines from database
-                    framework['baselines'] = get_baselines_from_db()
-                    
-                    return framework
+            # Parse JSON fields for SQLite
+            if framework.get('process_map'):
+                framework['process_map'] = json.loads(framework['process_map'])
+            if framework.get('risk_register'):
+                framework['risk_register'] = json.loads(framework['risk_register'])
+            if framework.get('mitigating_controls'):
+                framework['mitigating_controls'] = json.loads(framework['mitigating_controls'])
+            if framework.get('compliance_requirements'):
+                framework['compliance_requirements'] = json.loads(framework['compliance_requirements'])
+            
+            # Add baselines from database
+            baselines = get_baselines_from_db()
+            framework['baselines'] = baselines
+            print(f"📊 Loaded {len(baselines)} baselines from SQLite database")
+            
+            return framework
         
         return {}
         
@@ -116,34 +88,22 @@ def load_framework_from_db() -> Dict[str, Any]:
 
 
 def get_baselines_from_db() -> List[Dict[str, Any]]:
-    """Get baselines from database (PostgreSQL or SQLite)."""
+    """Get baselines from database - simplified like Glencore."""
     try:
         from app.database import get_db_connection
-        import sqlite3
         
         conn = get_db_connection()
         if not conn:
             return []
         
-        # Check if using SQLite or PostgreSQL
-        is_sqlite = isinstance(conn, sqlite3.Connection)
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM baselines ORDER BY baseline_id")
+        rows = cur.fetchall()
         
-        if is_sqlite:
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM baselines ORDER BY baseline_id")
-            rows = cur.fetchall()
-            
-            # Convert tuples to dictionaries with column names
-            columns = [description[0] for description in cur.description]
-            baselines = [dict(zip(columns, row)) for row in rows]
-            print(f"🔍 SQLite baselines query returned {len(baselines)} rows")
-            return baselines
-        else:
-            # PostgreSQL with RealDictCursor
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute("SELECT * FROM baselines ORDER BY baseline_id")
-                rows = cur.fetchall()
-                return [dict(row) for row in rows]
+        # SQLite Row objects act like dictionaries
+        baselines = [dict(row) for row in rows]
+        print(f"🔍 SQLite baselines query returned {len(baselines)} rows")
+        return baselines
         
     except Exception as e:
         print(f"❌ Error loading baselines from database: {e}")

@@ -16,188 +16,82 @@ import sqlite3
 from app.config import settings
 
 
+# Simple database path like Glencore
+DB_PATH = settings.database_url.replace("sqlite:///", "")
+
 def get_db_connection():
-    """Get database connection - PostgreSQL or SQLite"""
-    print(f"🔍 DATABASE_URL: {repr(settings.database_url)}")
-    
-    if not settings.database_url:
-        print("❌ DATABASE_URL not configured")
-        return None
-    
-    # Check if it's a SQLite URL
-    if settings.database_url.startswith("sqlite:///"):
-        print("🔄 Detected SQLite URL, attempting SQLite connection...")
-        try:
-            # Extract database path from SQLite URL
-            db_path = settings.database_url.replace("sqlite:///", "")
-            if not os.path.isabs(db_path):
-                # Make relative path absolute
-                db_path = os.path.join(os.path.dirname(__file__), '..', db_path)
-            
-            print(f"🔍 SQLite path: {db_path}")
-            conn = sqlite3.connect(db_path)
-            print(f"✅ SQLite database connection successful: {db_path}")
-            return conn
-        except Exception as e:
-            print(f"❌ SQLite connection failed: {e}")
-            return None
-    
-    # Try PostgreSQL
-    print("🔄 Attempting PostgreSQL connection...")
+    """Get database connection - SQLite only for now"""
     try:
-        conn = psycopg2.connect(settings.database_url)
-        print("✅ PostgreSQL database connection successful")
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row  # Like Glencore
+        print(f"✅ SQLite database connection successful: {DB_PATH}")
         return conn
     except Exception as e:
-        print(f"❌ PostgreSQL connection failed: {e}")
+        print(f"❌ SQLite connection failed: {e}")
         return None
 
 
 def create_tables():
-    """Create database tables"""
+    """Create database tables - simplified like Glencore"""
     conn = get_db_connection()
     if not conn:
         return False
     
     try:
-        # Check if using SQLite or PostgreSQL
-        is_sqlite = isinstance(conn, sqlite3.Connection)
-        
-        if is_sqlite:
-            cur = conn.cursor()
-            
-            # Create baselines table (SQLite)
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS baselines (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    baseline_id TEXT UNIQUE NOT NULL,
-                    baseline_name TEXT NOT NULL,
-                    description TEXT,
-                    maturity_level TEXT,
-                    control_coverage TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Create tools table (SQLite)
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS tools (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    tool_id TEXT UNIQUE NOT NULL,
-                    tool_name TEXT NOT NULL,
-                    tool_type TEXT,
-                    description TEXT,
-                    vendor TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Create regions table (SQLite)
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS regions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    region_id TEXT UNIQUE NOT NULL,
-                    region_name TEXT NOT NULL,
-                    country TEXT,
-                    compliance_score INTEGER,
-                    risk_level TEXT,
-                    interviewee TEXT,
-                    position TEXT,
-                    interview_date DATE,
-                    language TEXT,
-                    transcript_content TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Create framework table (SQLite)
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS framework (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    process_name TEXT,
-                    process_id TEXT,
-                    version TEXT,
-                    effective_date DATE,
-                    business_context TEXT,
-                    process_map TEXT,
-                    risk_register TEXT,
-                    mitigating_controls TEXT,
-                    compliance_requirements TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-        else:
-            # PostgreSQL with context manager
-            with conn.cursor() as cur:
-                # Create baselines table (PostgreSQL)
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS baselines (
-                        id SERIAL PRIMARY KEY,
-                        baseline_id VARCHAR(20) UNIQUE NOT NULL,
-                        baseline_name VARCHAR(200) NOT NULL,
-                        description TEXT,
-                        maturity_level VARCHAR(50),
-                        control_coverage VARCHAR(10),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """)
-                
-                # Create tools table (PostgreSQL)
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS tools (
-                        id SERIAL PRIMARY KEY,
-                        tool_id VARCHAR(20) UNIQUE NOT NULL,
-                        tool_name VARCHAR(200) NOT NULL,
-                        tool_type VARCHAR(50),
-                        description TEXT,
-                        vendor VARCHAR(100),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """)
-                
-                # Create regions table (PostgreSQL)
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS regions (
-                        id SERIAL PRIMARY KEY,
-                        region_id VARCHAR(20) UNIQUE NOT NULL,
-                        region_name VARCHAR(100) NOT NULL,
-                        country VARCHAR(100),
-                        compliance_score INTEGER,
-                        risk_level VARCHAR(20),
-                        interviewee VARCHAR(200),
-                        position VARCHAR(200),
-                        interview_date DATE,
-                        language VARCHAR(50),
-                        transcript_content TEXT,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """)
-                
-                # Create framework table (PostgreSQL)
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS framework (
-                        id SERIAL PRIMARY KEY,
-                        process_name VARCHAR(200),
-                        process_id VARCHAR(20),
-                        version VARCHAR(20),
-                        effective_date DATE,
-                        business_context TEXT,
-                        process_map JSONB,
-                        risk_register JSONB,
-                        mitigating_controls JSONB,
-                        compliance_requirements JSONB,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """)
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS baselines (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                baseline_id TEXT UNIQUE NOT NULL,
+                baseline_name TEXT NOT NULL,
+                description TEXT,
+                maturity_level TEXT,
+                control_coverage TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS tools (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tool_id TEXT UNIQUE NOT NULL,
+                tool_name TEXT NOT NULL,
+                tool_type TEXT,
+                description TEXT,
+                vendor TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS regions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                region_id TEXT UNIQUE NOT NULL,
+                region_name TEXT NOT NULL,
+                country TEXT,
+                compliance_score INTEGER,
+                risk_level TEXT,
+                interviewee TEXT,
+                position TEXT,
+                interview_date DATE,
+                language TEXT,
+                transcript_content TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS framework (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                process_name TEXT,
+                process_id TEXT,
+                version TEXT,
+                effective_date DATE,
+                business_context TEXT,
+                process_map TEXT,
+                risk_register TEXT,
+                mitigating_controls TEXT,
+                compliance_requirements TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
         
         conn.commit()
         print("✅ Tables created successfully")
@@ -240,32 +134,14 @@ def seed_baselines():
         return False
     
     try:
-        # Check if using SQLite or PostgreSQL
-        is_sqlite = isinstance(conn, sqlite3.Connection)
-        
-        if is_sqlite:
-            cur = conn.cursor()
-            for baseline in baselines_data:
-                # SQLite uses INSERT OR REPLACE
-                cur.execute("""
-                    INSERT OR REPLACE INTO baselines (baseline_id, baseline_name, description, maturity_level, control_coverage)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (baseline["baseline_id"], baseline["baseline_name"], baseline["description"], 
-                      baseline["maturity_level"], baseline["control_coverage"]))
-        else:
-            # PostgreSQL with context manager
-            with conn.cursor() as cur:
-                for baseline in baselines_data:
-                    cur.execute("""
-                        INSERT INTO baselines (baseline_id, baseline_name, description, maturity_level, control_coverage)
-                        VALUES (%(baseline_id)s, %(baseline_name)s, %(description)s, %(maturity_level)s, %(control_coverage)s)
-                        ON CONFLICT (baseline_id) DO UPDATE SET
-                            baseline_name = EXCLUDED.baseline_name,
-                            description = EXCLUDED.description,
-                            maturity_level = EXCLUDED.maturity_level,
-                            control_coverage = EXCLUDED.control_coverage,
-                            updated_at = CURRENT_TIMESTAMP
-                    """, baseline)
+        cur = conn.cursor()
+        for baseline in baselines_data:
+            # Simple INSERT OR REPLACE like Glencore approach
+            cur.execute("""
+                INSERT OR REPLACE INTO baselines (baseline_id, baseline_name, description, maturity_level, control_coverage)
+                VALUES (?, ?, ?, ?, ?)
+            """, (baseline["baseline_id"], baseline["baseline_name"], baseline["description"], 
+                  baseline["maturity_level"], baseline["control_coverage"]))
         
         conn.commit()
         print("✅ Baselines seeded successfully")
@@ -308,32 +184,14 @@ def seed_tools():
         return False
     
     try:
-        # Check if using SQLite or PostgreSQL
-        is_sqlite = isinstance(conn, sqlite3.Connection)
-        
-        if is_sqlite:
-            cur = conn.cursor()
-            for tool in tools_data:
-                # SQLite uses INSERT OR REPLACE
-                cur.execute("""
-                    INSERT OR REPLACE INTO tools (tool_id, tool_name, tool_type, description, vendor)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (tool["tool_id"], tool["tool_name"], tool["tool_type"], 
-                      tool["description"], tool["vendor"]))
-        else:
-            # PostgreSQL with context manager
-            with conn.cursor() as cur:
-                for tool in tools_data:
-                    cur.execute("""
-                        INSERT INTO tools (tool_id, tool_name, tool_type, description, vendor)
-                        VALUES (%(tool_id)s, %(tool_name)s, %(tool_type)s, %(description)s, %(vendor)s)
-                        ON CONFLICT (tool_id) DO UPDATE SET
-                            tool_name = EXCLUDED.tool_name,
-                            tool_type = EXCLUDED.tool_type,
-                            description = EXCLUDED.description,
-                            vendor = EXCLUDED.vendor,
-                            updated_at = CURRENT_TIMESTAMP
-                    """, tool)
+        cur = conn.cursor()
+        for tool in tools_data:
+            # Simple INSERT OR REPLACE like Glencore approach
+            cur.execute("""
+                INSERT OR REPLACE INTO tools (tool_id, tool_name, tool_type, description, vendor)
+                VALUES (?, ?, ?, ?, ?)
+            """, (tool["tool_id"], tool["tool_name"], tool["tool_type"], 
+                  tool["description"], tool["vendor"]))
         
         conn.commit()
         print("✅ Tools seeded successfully")
@@ -381,38 +239,15 @@ def seed_regions():
         return False
     
     try:
-        # Check if using SQLite or PostgreSQL
-        is_sqlite = isinstance(conn, sqlite3.Connection)
-        
-        if is_sqlite:
-            cur = conn.cursor()
-            for region in regions_data:
-                # SQLite uses INSERT OR REPLACE
-                cur.execute("""
-                    INSERT OR REPLACE INTO regions (region_id, region_name, country, compliance_score, risk_level, interviewee, position, interview_date, language, transcript_content)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (region["region_id"], region["region_name"], region["country"], region["compliance_score"], 
-                      region["risk_level"], region["interviewee"], region["position"], region["interview_date"], 
-                      region["language"], region["transcript_content"]))
-        else:
-            # PostgreSQL with context manager
-            with conn.cursor() as cur:
-                for region in regions_data:
-                    cur.execute("""
-                        INSERT INTO regions (region_id, region_name, country, compliance_score, risk_level, interviewee, position, interview_date, language, transcript_content)
-                        VALUES (%(region_id)s, %(region_name)s, %(country)s, %(compliance_score)s, %(risk_level)s, %(interviewee)s, %(position)s, %(interview_date)s, %(language)s, %(transcript_content)s)
-                        ON CONFLICT (region_id) DO UPDATE SET
-                            region_name = EXCLUDED.region_name,
-                            country = EXCLUDED.country,
-                            compliance_score = EXCLUDED.compliance_score,
-                            risk_level = EXCLUDED.risk_level,
-                            interviewee = EXCLUDED.interviewee,
-                            position = EXCLUDED.position,
-                            interview_date = EXCLUDED.interview_date,
-                            language = EXCLUDED.language,
-                            transcript_content = EXCLUDED.transcript_content,
-                            updated_at = CURRENT_TIMESTAMP
-                    """, region)
+        cur = conn.cursor()
+        for region in regions_data:
+            # Simple INSERT OR REPLACE like Glencore approach
+            cur.execute("""
+                INSERT OR REPLACE INTO regions (region_id, region_name, country, compliance_score, risk_level, interviewee, position, interview_date, language, transcript_content)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (region["region_id"], region["region_name"], region["country"], region["compliance_score"], 
+                  region["risk_level"], region["interviewee"], region["position"], region["interview_date"], 
+                  region["language"], region["transcript_content"]))
         
         conn.commit()
         print("✅ Regions seeded successfully")
@@ -531,34 +366,23 @@ def seed_framework():
     }
     
     try:
-        # Check if using SQLite or PostgreSQL
-        is_sqlite = isinstance(conn, sqlite3.Connection)
+        cur = conn.cursor()
+        # Convert JSON data to strings for SQLite
+        framework_data_sqlite = framework_data.copy()
+        framework_data_sqlite['process_map'] = json.dumps(framework_data_sqlite['process_map'])
+        framework_data_sqlite['risk_register'] = json.dumps(framework_data_sqlite['risk_register'])
+        framework_data_sqlite['mitigating_controls'] = json.dumps(framework_data_sqlite['mitigating_controls'])
+        framework_data_sqlite['compliance_requirements'] = json.dumps(framework_data_sqlite['compliance_requirements'])
         
-        if is_sqlite:
-            cur = conn.cursor()
-            # Convert JSON data to strings for SQLite
-            framework_data_sqlite = framework_data.copy()
-            framework_data_sqlite['process_map'] = json.dumps(framework_data_sqlite['process_map'])
-            framework_data_sqlite['risk_register'] = json.dumps(framework_data_sqlite['risk_register'])
-            framework_data_sqlite['mitigating_controls'] = json.dumps(framework_data_sqlite['mitigating_controls'])
-            framework_data_sqlite['compliance_requirements'] = json.dumps(framework_data_sqlite['compliance_requirements'])
-            
-            cur.execute("""
-                INSERT OR IGNORE INTO framework (process_name, process_id, version, effective_date, business_context, process_map, risk_register, mitigating_controls, compliance_requirements)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (framework_data_sqlite['process_name'], framework_data_sqlite['process_id'], 
-                  framework_data_sqlite['version'], framework_data_sqlite['effective_date'], 
-                  framework_data_sqlite['business_context'], framework_data_sqlite['process_map'],
-                  framework_data_sqlite['risk_register'], framework_data_sqlite['mitigating_controls'],
-                  framework_data_sqlite['compliance_requirements']))
-        else:
-            # PostgreSQL with context manager
-            with conn.cursor() as cur:
-                cur.execute("""
-                    INSERT INTO framework (process_name, process_id, version, effective_date, business_context, process_map, risk_register, mitigating_controls, compliance_requirements)
-                    VALUES (%(process_name)s, %(process_id)s, %(version)s, %(effective_date)s, %(business_context)s, %(process_map)s, %(risk_register)s, %(mitigating_controls)s, %(compliance_requirements)s)
-                    ON CONFLICT DO NOTHING
-                """, framework_data)
+        # Simple INSERT OR IGNORE like Glencore approach
+        cur.execute("""
+            INSERT OR IGNORE INTO framework (process_name, process_id, version, effective_date, business_context, process_map, risk_register, mitigating_controls, compliance_requirements)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (framework_data_sqlite['process_name'], framework_data_sqlite['process_id'], 
+              framework_data_sqlite['version'], framework_data_sqlite['effective_date'], 
+              framework_data_sqlite['business_context'], framework_data_sqlite['process_map'],
+              framework_data_sqlite['risk_register'], framework_data_sqlite['mitigating_controls'],
+              framework_data_sqlite['compliance_requirements']))
         
         conn.commit()
         print("✅ Framework seeded successfully")
