@@ -1,8 +1,7 @@
 """
-Database API Router - Direct database access for baselines, tools, and regions
+Database API Router - Direct database access endpoints
 """
-from __future__ import annotations
-
+import json
 from typing import List, Dict, Any
 
 from fastapi import APIRouter, HTTPException
@@ -15,7 +14,7 @@ router = APIRouter(prefix="/database", tags=["Database"])
 
 @router.get("/baselines")
 async def get_baselines() -> List[Dict[str, Any]]:
-    """Get all baselines from database with fallback - SQLite compatible."""
+    """Get all baselines from database with counts - SQLite compatible."""
     print("🚨 DATABASE_API BASELINES ENDPOINT HIT")
     conn = get_db_connection()
     if not conn:
@@ -25,16 +24,101 @@ async def get_baselines() -> List[Dict[str, Any]]:
     
     try:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM baselines ORDER BY baseline_id")
+        cur.execute("""
+            SELECT b.*, 
+                   (SELECT COUNT(*) FROM baseline_process_steps WHERE baseline_id = b.baseline_id) as steps_count,
+                   (SELECT COUNT(*) FROM baseline_risks WHERE baseline_id = b.baseline_id) as risks_count,
+                   (SELECT COUNT(*) FROM baseline_controls WHERE baseline_id = b.baseline_id) as controls_count
+            FROM baselines b ORDER BY b.baseline_id
+        """)
         baselines = cur.fetchall()
         result = [dict(baseline) for baseline in baselines]
-        print(f"✅ DATABASE_API: Loaded {len(result)} baselines from database")
+        print(f"✅ DATABASE_API: Loaded {len(result)} baselines with counts from database")
         return result
     except Exception as e:
         print(f"❌ Database error, using fallback: {e}")
         import traceback
         print(f"❌ Full traceback: {traceback.format_exc()}")
         return get_fallback_baselines()
+    finally:
+        conn.close()
+
+
+@router.get("/baselines/{baseline_id}/full")
+async def get_baseline_full(baseline_id: str) -> Dict[str, Any]:
+    """Get baseline with all Golden Thread data (process steps, risks, controls, compliance)."""
+    print(f"🔍 Getting full baseline data for {baseline_id}")
+    conn = get_db_connection()
+    if not conn:
+        return {"error": "Database not available"}
+    
+    try:
+        cur = conn.cursor()
+        
+        # Get baseline info
+        cur.execute("SELECT * FROM baselines WHERE baseline_id = ?", (baseline_id,))
+        baseline = cur.fetchone()
+        if not baseline:
+            return {"error": "Baseline not found"}
+        
+        baseline_dict = dict(baseline)
+        
+        # Get process steps
+        cur.execute("SELECT * FROM baseline_process_steps WHERE baseline_id = ? ORDER BY step_number", (baseline_id,))
+        steps = [dict(step) for step in cur.fetchall()]
+        
+        # Get risks
+        cur.execute("SELECT * FROM baseline_risks WHERE baseline_id = ? ORDER BY risk_id", (baseline_id,))
+        risks = []
+        for risk in cur.fetchall():
+            risk_dict = dict(risk)
+            # Parse JSON field
+            if risk_dict.get('related_step_numbers'):
+                risk_dict['related_step_numbers'] = json.loads(risk_dict['related_step_numbers'])
+            risks.append(risk_dict)
+        
+        # Get controls
+        cur.execute("SELECT * FROM baseline_controls WHERE baseline_id = ? ORDER BY control_id", (baseline_id,))
+        controls = []
+        for control in cur.fetchall():
+            control_dict = dict(control)
+            # Parse JSON field
+            if control_dict.get('risk_ids'):
+                control_dict['risk_ids'] = json.loads(control_dict['risk_ids'])
+            controls.append(control_dict)
+        
+        # Get compliance requirements
+        cur.execute("SELECT * FROM baseline_compliance_requirements WHERE baseline_id = ? ORDER BY regulation", (baseline_id,))
+        compliance = []
+        for req in cur.fetchall():
+            req_dict = dict(req)
+            # Parse JSON field
+            if req_dict.get('applicable_regions'):
+                req_dict['applicable_regions'] = json.loads(req_dict['applicable_regions'])
+            compliance.append(req_dict)
+        
+        result = {
+            **baseline_dict,
+            "process_steps": steps,
+            "risks": risks,
+            "controls": controls,
+            "compliance_requirements": compliance,
+            "summary": {
+                "steps_count": len(steps),
+                "risks_count": len(risks),
+                "controls_count": len(controls),
+                "compliance_count": len(compliance)
+            }
+        }
+        
+        print(f"✅ Returning full baseline data: {len(steps)} steps, {len(risks)} risks, {len(controls)} controls, {len(compliance)} compliance")
+        return result
+        
+    except Exception as e:
+        print(f"❌ Error getting full baseline: {e}")
+        import traceback
+        print(f"❌ Full traceback: {traceback.format_exc()}")
+        return {"error": str(e)}
     finally:
         conn.close()
 

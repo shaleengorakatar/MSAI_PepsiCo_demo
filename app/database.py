@@ -14,6 +14,12 @@ from psycopg2.extras import RealDictCursor
 import sqlite3
 
 from app.config import settings
+from app.golden_thread_templates import (
+    get_process_steps_template,
+    get_risks_template,
+    get_controls_template,
+    get_compliance_template
+)
 
 
 # Simple database path like Glencore
@@ -90,6 +96,59 @@ def create_tables():
                 compliance_requirements TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            -- Golden Thread Tables
+            CREATE TABLE IF NOT EXISTS baseline_process_steps (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                baseline_id TEXT NOT NULL,
+                step_number INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                responsible_role TEXT,
+                objective TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (baseline_id) REFERENCES baselines(baseline_id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS baseline_risks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                baseline_id TEXT NOT NULL,
+                risk_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                category TEXT,
+                severity TEXT,
+                related_step_numbers TEXT,  -- JSON array of step numbers
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (baseline_id) REFERENCES baselines(baseline_id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS baseline_controls (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                baseline_id TEXT NOT NULL,
+                control_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                control_type TEXT,  -- Manual/Automated/ITGC
+                risk_ids TEXT,     -- JSON array of risk IDs
+                frequency TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (baseline_id) REFERENCES baselines(baseline_id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS baseline_compliance_requirements (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                baseline_id TEXT NOT NULL,
+                regulation TEXT NOT NULL,
+                requirement_text TEXT,
+                applicable_regions TEXT,  -- JSON array of regions
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (baseline_id) REFERENCES baselines(baseline_id) ON DELETE CASCADE
             );
         """)
         
@@ -396,6 +455,102 @@ def seed_framework():
         conn.close()
 
 
+def seed_golden_thread_data():
+    """Seed Golden Thread data for all baselines"""
+    conn = get_db_connection()
+    if not conn:
+        return False
+    
+    try:
+        cur = conn.cursor()
+        
+        # Get all existing baselines
+        cur.execute("SELECT baseline_id, baseline_name FROM baselines")
+        baselines = cur.fetchall()
+        
+        print(f"🔄 Starting Golden Thread seeding for {len(baselines)} baselines...")
+        
+        for baseline in baselines:
+            baseline_id = baseline[0]
+            baseline_name = baseline[1]
+            print(f"📝 Seeding Golden Thread for {baseline_id}: {baseline_name}")
+            
+            # Seed process steps
+            seed_process_steps_for_baseline(cur, baseline_id)
+            
+            # Seed risks
+            seed_risks_for_baseline(cur, baseline_id)
+            
+            # Seed controls
+            seed_controls_for_baseline(cur, baseline_id)
+            
+            # Seed compliance requirements
+            seed_compliance_for_baseline(cur, baseline_id)
+        
+        conn.commit()
+        print("✅ Golden Thread data seeded successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error seeding Golden Thread data: {e}")
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
+
+
+def seed_process_steps_for_baseline(cur, baseline_id):
+    """Seed process steps for a specific baseline"""
+    process_steps_data = get_process_steps_template(baseline_id)
+    
+    for step in process_steps_data:
+        cur.execute("""
+            INSERT OR REPLACE INTO baseline_process_steps 
+            (baseline_id, step_number, title, description, responsible_role, objective)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (baseline_id, step["step_number"], step["title"], step["description"], 
+              step["responsible_role"], step["objective"]))
+
+
+def seed_risks_for_baseline(cur, baseline_id):
+    """Seed risks for a specific baseline"""
+    risks_data = get_risks_template(baseline_id)
+    
+    for risk in risks_data:
+        cur.execute("""
+            INSERT OR REPLACE INTO baseline_risks 
+            (baseline_id, risk_id, name, description, category, severity, related_step_numbers)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (baseline_id, risk["risk_id"], risk["name"], risk["description"], 
+              risk["category"], risk["severity"], json.dumps(risk["related_step_numbers"])))
+
+
+def seed_controls_for_baseline(cur, baseline_id):
+    """Seed controls for a specific baseline"""
+    controls_data = get_controls_template(baseline_id)
+    
+    for control in controls_data:
+        cur.execute("""
+            INSERT OR REPLACE INTO baseline_controls 
+            (baseline_id, control_id, name, description, control_type, risk_ids, frequency)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (baseline_id, control["control_id"], control["name"], control["description"], 
+              control["control_type"], json.dumps(control["risk_ids"]), control["frequency"]))
+
+
+def seed_compliance_for_baseline(cur, baseline_id):
+    """Seed compliance requirements for a specific baseline"""
+    compliance_data = get_compliance_template(baseline_id)
+    
+    for requirement in compliance_data:
+        cur.execute("""
+            INSERT OR REPLACE INTO baseline_compliance_requirements 
+            (baseline_id, regulation, requirement_text, applicable_regions)
+            VALUES (?, ?, ?, ?)
+        """, (baseline_id, requirement["regulation"], requirement["requirement_text"], 
+              json.dumps(requirement["applicable_regions"])))
+
+
 def seed_all_data():
     """Seed all demo data"""
     print("🌱 Starting database seeding...")
@@ -417,6 +572,10 @@ def seed_all_data():
         success = False
     
     if success and not seed_framework():
+        success = False
+    
+    # Seed Golden Thread data after baselines are created
+    if success and not seed_golden_thread_data():
         success = False
     
     if success:
