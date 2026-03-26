@@ -18,40 +18,30 @@ async def test_baselines():
 
 @router.get("")
 async def get_baselines() -> List[Dict[str, Any]]:
-    """Get baselines - always works without database."""
-    print("✅ Returning baselines from static endpoint (no database)")
-    baselines = [
-        {
-            "baseline_id": "BL-001",
-            "baseline_name": "Core Access Management",
-            "description": "Fundamental user access provisioning and deprovisioning",
-            "maturity_level": "Optimized",
-            "control_coverage": "95%"
-        },
-        {
-            "baseline_id": "BL-002",
-            "baseline_name": "Segregation of Duties",
-            "description": "SoD enforcement and conflict prevention",
-            "maturity_level": "Managed",
-            "control_coverage": "88%"
-        },
-        {
-            "baseline_id": "BL-003",
-            "baseline_name": "Access Certification",
-            "description": "Periodic access review and certification",
-            "maturity_level": "Defined",
-            "control_coverage": "82%"
-        },
-        {
-            "baseline_id": "BL-004",
-            "baseline_name": "Emergency Access",
-            "description": "Break-glass and emergency access procedures",
-            "maturity_level": "Managed",
-            "control_coverage": "75%"
-        }
-    ]
-    print(f"✅ Returning {len(baselines)} baselines")
-    return baselines
+    """Get baselines from database."""
+    try:
+        from app.database import get_db_connection
+        
+        conn = get_db_connection()
+        if not conn:
+            print("❌ Database connection failed for baselines endpoint")
+            return []
+        
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM baselines ORDER BY baseline_id")
+        rows = cur.fetchall()
+        
+        # Convert SQLite Row objects to dictionaries
+        baselines = [dict(row) for row in rows]
+        print(f"✅ Returning {len(baselines)} baselines from database")
+        return baselines
+        
+    except Exception as e:
+        print(f"❌ Error loading baselines from database: {e}")
+        return []
+    finally:
+        if 'conn' in locals():
+            conn.close()
 
 
 @router.get("/tools")
