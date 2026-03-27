@@ -58,6 +58,17 @@ def create_tables():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
+            -- Add new columns to existing tables if they don't exist (safe migration)
+            try:
+                cur.execute("ALTER TABLE baselines ADD COLUMN enforcing_policy TEXT")
+            except sqlite3.OperationalError:
+                pass  # Column already exists
+            
+            try:
+                cur.execute("ALTER TABLE baselines ADD COLUMN sop_reference TEXT")
+            except sqlite3.OperationalError:
+                pass  # Column already exists
+
             CREATE TABLE IF NOT EXISTS tools (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 tool_id TEXT UNIQUE NOT NULL,
