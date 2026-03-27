@@ -74,10 +74,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Middleware
+# CORS Middleware - Allow both local development and production
+import os
+allowed_origins = [
+    "http://localhost:3000", "http://localhost:5173", 
+    "http://127.0.0.1:3000", "http://127.0.0.1:5173"
+]
+
+# Add production frontend URL if available
+frontend_url = os.environ.get("FRONTEND_URL")
+if frontend_url:
+    allowed_origins.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -247,6 +258,8 @@ async def startup_event():
     asyncio.create_task(generate_normal_logs())
 
 if __name__ == "__main__":
+    import os
+    
     print("🚀 Starting Enterprise AI Monitoring Backend...")
     print("📊 Available endpoints:")
     print("   GET  /api/logs - Get latest logs")
@@ -258,10 +271,13 @@ if __name__ == "__main__":
     print("🔄 Background log generation: every 2 seconds")
     print("📝 In-memory storage: last 100 logs")
     
+    # Get port from environment (Render sets this)
+    port = int(os.environ.get("PORT", 8000))
+    
     uvicorn.run(
         "ai_monitoring_main:app",
         host="0.0.0.0",
-        port=8000,
-        reload=True,
+        port=port,
+        reload=False,  # Disable reload in production
         log_level="info"
     )
