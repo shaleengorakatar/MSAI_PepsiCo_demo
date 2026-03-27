@@ -8,7 +8,7 @@ import time
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, CORSConfig
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import uvicorn
@@ -93,7 +93,7 @@ async def generate_normal_logs():
                 timestamp=datetime.now(),
                 agent_name=random.choice(AGENT_NAMES),
                 action=random.choice(ACTIONS),
-                status=random.choice(["Success", "Evaluating"], weights=[0.8, 0.2]),
+                status=random.choices(["Success", "Evaluating"], weights=[0.8, 0.2])[0],
                 risk_score=random.uniform(0.1, 0.4),  # Normal risk scores
                 raw_prompt=random.choice(NORMAL_PROMPTS)
             )
