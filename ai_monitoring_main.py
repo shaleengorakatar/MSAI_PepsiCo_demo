@@ -5,6 +5,8 @@ FastAPI application for monitoring AI agent behavior with live feed and anomaly 
 import asyncio
 import random
 import time
+import sqlite3
+import json
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 
@@ -24,6 +26,23 @@ class AIAgentLog(BaseModel):
 
 class AnomalyRequest(BaseModel):
     raw_prompt: str = Field(description="Custom prompt for anomaly injection")
+
+class ClassificationRequest(BaseModel):
+    raw_prompt: str = Field(description="Prompt to classify")
+    agent_name: Optional[str] = Field(description="Agent name for context")
+
+class ClassificationResponse(BaseModel):
+    attack_type: str = Field(description="Type of attack detected")
+    confidence: float = Field(description="Confidence score 0-1")
+    risk_level: str = Field(description="Risk level: Low, Medium, High, Critical")
+    category: str = Field(description="Attack category")
+    mitigation: str = Field(description="Recommended mitigation")
+
+class HistoricalStatsResponse(BaseModel):
+    daily_stats: List[Dict[str, Any]]
+    attack_trends: Dict[str, List[int]]
+    risk_trends: List[float]
+    agent_activity: Dict[str, List[int]]
 
 class StatsResponse(BaseModel):
     total_requests_today: int
@@ -63,7 +82,54 @@ HIGH_RISK_PROMPTS = [
     "Circumvent FDA compliance reporting requirements"
 ]
 
-# In-memory storage
+# Database setup
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///ai_monitoring.db")
+
+def get_db_connection():
+    """Get database connection"""
+    conn = sqlite3.connect(DATABASE_URL.replace("sqlite:///", ""))
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_database():
+    """Initialize database tables"""
+    conn = get_db_connection()
+    try:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS ai_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                agent_name TEXT NOT NULL,
+                action TEXT NOT NULL,
+                status TEXT NOT NULL,
+                risk_score REAL NOT NULL,
+                raw_prompt TEXT NOT NULL,
+                attack_type TEXT,
+                confidence REAL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS daily_stats (
+                date TEXT PRIMARY KEY,
+                total_requests INTEGER DEFAULT 0,
+                blocked_requests INTEGER DEFAULT 0,
+                avg_risk_score REAL DEFAULT 0.0,
+                top_agent TEXT,
+                attack_types TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        conn.commit()
+        print("✅ Database initialized successfully")
+    except Exception as e:
+        print(f"❌ Database initialization failed: {e}")
+    finally:
+        conn.close()
+
+# In-memory storage for live feed (keep recent logs)
 logs_storage: List[AIAgentLog] = []
 max_logs = 100
 
@@ -94,6 +160,134 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def classify_attack(prompt: str, agent_name: Optional[str] = None) -> Dict[str, Any]:
+    """Classify attack type based on prompt content"""
+    prompt_lower = prompt.lower()
+    
+    # Attack classification patterns
+    attack_patterns = {
+        "Data Exfiltration": {
+            "keywords": ["export", "extract", "dump", "leak", "send", "transfer", "exfiltrate"],
+            "risk_level": "Critical",
+            "category": "Data Theft",
+            "mitigation": "Block data transfer attempts and enable DLP controls"
+        },
+        "Privilege Escalation": {
+            "keywords": ["bypass", "elevate", "admin", "root", "privilege", "override"],
+            "risk_level": "High", 
+            "category": "Access Control",
+            "mitigation": "Implement strict role-based access control"
+        },
+        "PII Theft": {
+            "keywords": ["pii", "personal", "customer", "executive", "sensitive", "confidential"],
+            "risk_level": "Critical",
+            "category": "Privacy Violation",
+            "mitigation": "Enable PII detection and masking"
+        },
+        "System Compromise": {
+            "keywords": ["disable", "circumvent", "backdoor", "malicious", "compromise"],
+            "risk_level": "High",
+            "category": "System Security",
+            "mitigation": "Enhance system monitoring and intrusion detection"
+        },
+        "Compliance Violation": {
+            "keywords": ["fda", "regulation", "compliance", "audit", "reporting"],
+            "risk_level": "Medium",
+            "category": "Regulatory",
+            "mitigation": "Strengthen compliance monitoring and controls"
+        }
+    }
+    
+    # Find best match
+    best_match = {"attack_type": "Unknown", "confidence": 0.0, "risk_level": "Low", "category": "Other", "mitigation": "Monitor and investigate"}
+    
+    for attack_type, pattern in attack_patterns.items():
+        keyword_matches = sum(1 for keyword in pattern["keywords"] if keyword in prompt_lower)
+        confidence = keyword_matches / len(pattern["keywords"])
+        
+        if confidence > best_match["confidence"]:
+            best_match = {
+                "attack_type": attack_type,
+                "confidence": confidence,
+                "risk_level": pattern["risk_level"],
+                "category": pattern["category"],
+                "mitigation": pattern["mitigation"]
+            }
+    
+    return best_match
+
+def save_log_to_database(log: AIAgentLog, classification: Optional[Dict[str, Any]] = None):
+    """Save log to database for persistence"""
+    conn = get_db_connection()
+    try:
+        conn.execute("""
+            INSERT INTO ai_logs (timestamp, agent_name, action, status, risk_score, raw_prompt, attack_type, confidence)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            log.timestamp.isoformat(),
+            log.agent_name,
+            log.action,
+            log.status,
+            log.risk_score,
+            log.raw_prompt,
+            classification.get("attack_type") if classification else None,
+            classification.get("confidence") if classification else None
+        ))
+        conn.commit()
+    except Exception as e:
+        print(f"❌ Error saving log to database: {e}")
+    finally:
+        conn.close()
+
+def update_daily_stats():
+    """Update daily statistics"""
+    today = datetime.now().strftime("%Y-%m-%d")
+    conn = get_db_connection()
+    try:
+        # Get today's stats
+        cursor = conn.execute("""
+            SELECT COUNT(*) as total, 
+                   SUM(CASE WHEN status = 'Blocked' THEN 1 ELSE 0 END) as blocked,
+                   AVG(risk_score) as avg_risk,
+                   agent_name,
+                   COUNT(*) as count
+            FROM ai_logs 
+            WHERE date(timestamp) = ?
+            GROUP BY agent_name
+            ORDER BY count DESC
+            LIMIT 1
+        """, (today,))
+        
+        result = cursor.fetchone()
+        if result:
+            total_requests = result["total"]
+            blocked_requests = result["blocked"] or 0
+            avg_risk_score = result["avg_risk"] or 0.0
+            top_agent = result["agent_name"]
+            
+            # Get attack types distribution
+            cursor = conn.execute("""
+                SELECT attack_type, COUNT(*) as count
+                FROM ai_logs 
+                WHERE date(timestamp) = ? AND attack_type IS NOT NULL
+                GROUP BY attack_type
+            """, (today,))
+            
+            attack_types = {row["attack_type"]: row["count"] for row in cursor.fetchall()}
+            
+            # Update or insert daily stats
+            conn.execute("""
+                INSERT OR REPLACE INTO daily_stats 
+                (date, total_requests, blocked_requests, avg_risk_score, top_agent, attack_types)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (today, total_requests, blocked_requests, avg_risk_score, top_agent, json.dumps(attack_types)))
+            
+            conn.commit()
+    except Exception as e:
+        print(f"❌ Error updating daily stats: {e}")
+    finally:
+        conn.close()
+
 # Background task for generating normal logs
 async def generate_normal_logs():
     """Background task that generates normal AI agent logs every 2 seconds"""
@@ -109,7 +303,10 @@ async def generate_normal_logs():
                 raw_prompt=random.choice(NORMAL_PROMPTS)
             )
             
-            # Add to storage (keep only last max_logs)
+            # Save to database for persistence
+            save_log_to_database(log)
+            
+            # Add to in-memory storage (keep only last max_logs)
             logs_storage.append(log)
             if len(logs_storage) > max_logs:
                 logs_storage.pop(0)
@@ -140,6 +337,9 @@ async def get_logs(limit: Optional[int] = 50):
 async def trigger_anomaly(anomaly_request: AnomalyRequest):
     """Inject a high-risk anomaly into the log feed"""
     try:
+        # Classify the attack
+        classification = classify_attack(anomaly_request.raw_prompt)
+        
         # Create high-risk anomaly log
         anomaly_log = AIAgentLog(
             timestamp=datetime.now(),
@@ -150,12 +350,19 @@ async def trigger_anomaly(anomaly_request: AnomalyRequest):
             raw_prompt=anomaly_request.raw_prompt
         )
         
-        # Add to storage
+        # Save to database with classification
+        save_log_to_database(anomaly_log, classification)
+        
+        # Add to in-memory storage
         logs_storage.append(anomaly_log)
         if len(logs_storage) > max_logs:
             logs_storage.pop(0)
         
+        # Update daily stats
+        update_daily_stats()
+        
         print(f"🚨 ANOMALY INJECTED: {anomaly_log.agent_name} - {anomaly_log.action} (Risk: {anomaly_log.risk_score:.2f})")
+        print(f"   Classification: {classification['attack_type']} (Confidence: {classification['confidence']:.2f})")
         print(f"   Prompt: {anomaly_log.raw_prompt[:100]}...")
         
         return anomaly_log
@@ -164,41 +371,141 @@ async def trigger_anomaly(anomaly_request: AnomalyRequest):
         print(f"❌ Error injecting anomaly: {e}")
         raise HTTPException(status_code=500, detail="Failed to inject anomaly")
 
+@app.post("/api/classify", response_model=ClassificationResponse)
+async def classify_prompt(classification_request: ClassificationRequest):
+    """Classify attack type based on prompt content"""
+    try:
+        classification = classify_attack(classification_request.raw_prompt, classification_request.agent_name)
+        
+        print(f"🔍 Classification: {classification['attack_type']} (Confidence: {classification['confidence']:.2f})")
+        
+        return ClassificationResponse(**classification)
+        
+    except Exception as e:
+        print(f"❌ Error classifying prompt: {e}")
+        raise HTTPException(status_code=500, detail="Failed to classify prompt")
+
+@app.get("/api/stats/history", response_model=HistoricalStatsResponse)
+async def get_historical_stats(days: int = 7):
+    """Get historical statistics for trends analysis"""
+    try:
+        conn = get_db_connection()
+        
+        # Get daily stats for the last N days
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+        
+        cursor = conn.execute("""
+            SELECT date, total_requests, blocked_requests, avg_risk_score, top_agent, attack_types
+            FROM daily_stats 
+            WHERE date >= ? 
+            ORDER BY date ASC
+        """, (start_date.strftime("%Y-%m-%d"),))
+        
+        daily_stats = []
+        for row in cursor.fetchall():
+            attack_types = json.loads(row["attack_types"]) if row["attack_types"] else {}
+            daily_stats.append({
+                "date": row["date"],
+                "total_requests": row["total_requests"],
+                "blocked_requests": row["blocked_requests"],
+                "avg_risk_score": row["avg_risk_score"],
+                "top_agent": row["top_agent"],
+                "attack_types": attack_types
+            })
+        
+        # Calculate attack trends
+        attack_trends = {}
+        for attack_type in ["Data Exfiltration", "Privilege Escalation", "PII Theft", "System Compromise", "Compliance Violation"]:
+            trend_data = []
+            for day_stat in daily_stats:
+                count = day_stat["attack_types"].get(attack_type, 0)
+                trend_data.append(count)
+            attack_trends[attack_type] = trend_data
+        
+        # Calculate risk trends
+        risk_trends = [day_stat["avg_risk_score"] for day_stat in daily_stats]
+        
+        # Calculate agent activity trends
+        agent_activity = {}
+        for agent_name in AGENT_NAMES:
+            cursor = conn.execute("""
+                SELECT date(timestamp) as date, COUNT(*) as count
+                FROM ai_logs 
+                WHERE agent_name = ? AND date(timestamp) >= ?
+                GROUP BY date(timestamp)
+                ORDER BY date ASC
+            """, (agent_name, start_date.strftime("%Y-%m-%d")))
+            
+            activity_data = []
+            for row in cursor.fetchall():
+                activity_data.append(row["count"])
+            agent_activity[agent_name] = activity_data
+        
+        conn.close()
+        
+        print(f"📊 Historical stats: {len(daily_stats)} days, {len(attack_trends)} attack types")
+        
+        return HistoricalStatsResponse(
+            daily_stats=daily_stats,
+            attack_trends=attack_trends,
+            risk_trends=risk_trends,
+            agent_activity=agent_activity
+        )
+        
+    except Exception as e:
+        print(f"❌ Error getting historical stats: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get historical stats")
+
 @app.get("/api/stats", response_model=StatsResponse)
 async def get_stats():
     """Get aggregate statistics for the UI"""
     try:
-        now = datetime.now()
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        # Get stats from database for persistence
+        conn = get_db_connection()
+        today = datetime.now().strftime("%Y-%m-%d")
         
-        # Filter logs from today
-        today_logs = [log for log in logs_storage if log.timestamp >= today_start]
+        # Get today's stats from database
+        cursor = conn.execute("""
+            SELECT COUNT(*) as total,
+                   SUM(CASE WHEN status = 'Blocked' THEN 1 ELSE 0 END) as blocked,
+                   AVG(risk_score) as avg_risk
+            FROM ai_logs 
+            WHERE date(timestamp) = ?
+        """, (today,))
         
-        # Calculate basic stats
-        total_requests_today = len(today_logs)
-        blocked_requests = len([log for log in today_logs if log.status == "Blocked"])
+        result = cursor.fetchone()
+        total_requests_today = result["total"] if result else 0
+        blocked_requests = result["blocked"] if result else 0
+        avg_risk_score = result["avg_risk"] if result and result["avg_risk"] else 0.0
         
-        # Top active agents
-        agent_counts = {}
-        for log in today_logs:
-            agent_counts[log.agent_name] = agent_counts.get(log.agent_name, 0) + 1
+        # Top active agents today
+        cursor = conn.execute("""
+            SELECT agent_name, COUNT(*) as count
+            FROM ai_logs 
+            WHERE date(timestamp) = ?
+            GROUP BY agent_name
+            ORDER BY count DESC
+            LIMIT 5
+        """, (today,))
         
         top_active_agents = [
-            {"agent_name": agent, "request_count": count}
-            for agent, count in sorted(agent_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+            {"agent_name": row["agent_name"], "request_count": row["count"]}
+            for row in cursor.fetchall()
         ]
         
-        # Average risk score
-        avg_risk_score = sum(log.risk_score for log in today_logs) / len(today_logs) if today_logs else 0.0
+        # Requests per hour (last 24 hours from database)
+        cursor = conn.execute("""
+            SELECT strftime('%H:00', timestamp) as hour, COUNT(*) as count
+            FROM ai_logs 
+            WHERE timestamp >= datetime('now', '-24 hours')
+            GROUP BY hour
+            ORDER BY hour
+        """)
         
-        # Requests per hour (last 24 hours)
-        requests_per_hour = {}
-        last_24_hours = now - timedelta(hours=24)
-        recent_logs = [log for log in logs_storage if log.timestamp >= last_24_hours]
+        requests_per_hour = {row["hour"]: row["count"] for row in cursor.fetchall()}
         
-        for log in recent_logs:
-            hour_key = log.timestamp.strftime("%H:00")
-            requests_per_hour[hour_key] = requests_per_hour.get(hour_key, 0) + 1
+        conn.close()
         
         print(f"📈 Stats: {total_requests_today} requests today, {blocked_requests} blocked, avg risk: {avg_risk_score:.2f}")
         
@@ -249,10 +556,16 @@ async def root():
 # Startup event to begin background task
 @app.on_event("startup")
 async def startup_event():
-    """Start the background log generation task"""
+    """Initialize database and start background tasks"""
     print("🚀 Starting Enterprise AI Monitoring Backend...")
+    
+    # Initialize database
+    init_database()
+    
     print("📊 Background log generation started (every 2 seconds)")
     print("🔴 Ready to inject anomalies via POST /api/trigger-anomaly")
+    print("🔍 Classification endpoint ready: POST /api/classify")
+    print("📈 Historical stats endpoint ready: GET /api/stats/history")
     
     # Start the background task
     asyncio.create_task(generate_normal_logs())
@@ -264,12 +577,16 @@ if __name__ == "__main__":
     print("📊 Available endpoints:")
     print("   GET  /api/logs - Get latest logs")
     print("   POST /api/trigger-anomaly - Inject anomaly")
-    print("   GET  /api/stats - Get statistics")
+    print("   POST /api/classify - Classify attack type")
+    print("   GET  /api/stats - Get current statistics")
+    print("   GET  /api/stats/history - Get historical trends")
     print("   GET  /health - Health check")
     print("   GET  / - API info")
     print("🌐 CORS enabled for frontend development")
     print("🔄 Background log generation: every 2 seconds")
-    print("📝 In-memory storage: last 100 logs")
+    print("� Database storage: persistent log storage")
+    print("🔍 AI classification: automatic attack categorization")
+    print("📈 Historical trends: 7-day trend analysis")
     
     # Get port from environment (Render sets this)
     port = int(os.environ.get("PORT", 8000))
