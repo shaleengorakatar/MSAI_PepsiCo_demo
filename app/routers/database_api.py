@@ -301,28 +301,36 @@ def get_fallback_baselines() -> List[Dict[str, Any]]:
             "baseline_name": "Core Access Management",
             "description": "Fundamental user access provisioning and deprovisioning",
             "maturity_level": "Optimized",
-            "control_coverage": "95%"
+            "control_coverage": "95%",
+            "enforcing_policy": "Global Information Security Policy v4.0",
+            "sop_reference": "SOP-SEC-001: User Access Provisioning"
         },
         {
             "baseline_id": "BL-002",
             "baseline_name": "Segregation of Duties",
             "description": "SoD enforcement and conflict prevention",
             "maturity_level": "Managed",
-            "control_coverage": "88%"
+            "control_coverage": "88%",
+            "enforcing_policy": "Corporate Governance Policy v3.2",
+            "sop_reference": "SOP-GRC-042: SoD Enforcement"
         },
         {
             "baseline_id": "BL-003",
             "baseline_name": "Access Certification",
             "description": "Periodic access review and certification",
             "maturity_level": "Defined",
-            "control_coverage": "82%"
+            "control_coverage": "82%",
+            "enforcing_policy": "SOX Compliance Framework v2.1",
+            "sop_reference": "SOP-COM-015: Access Certification"
         },
         {
             "baseline_id": "BL-004",
             "baseline_name": "Emergency Access",
             "description": "Break-glass and emergency access procedures",
             "maturity_level": "Managed",
-            "control_coverage": "75%"
+            "control_coverage": "75%",
+            "enforcing_policy": "Business Continuity Policy v2.0",
+            "sop_reference": "SOP-OPS-008: Emergency Access Procedures"
         }
     ]
 

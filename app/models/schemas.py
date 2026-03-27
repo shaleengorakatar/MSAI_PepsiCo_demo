@@ -199,6 +199,8 @@ class GlobalBaselineControl(BaseModel):
     process_steps: List[ControlStep] = Field(default_factory=list)
     risks: List[Risk] = Field(default_factory=list)
     version: str = "1.0"
+    enforcing_policy: Optional[str] = Field(None, description="The overarching corporate rule, e.g., 'Global Information Security Policy v4'")
+    sop_reference: Optional[str] = Field(None, description="The specific operational document, e.g., 'SOP-SEC-042: Secure Data Handling'")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

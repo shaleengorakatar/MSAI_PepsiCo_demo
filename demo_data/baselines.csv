@@ -1,21 +1,21 @@
-baseline_id,baseline_name,description,maturity_level,control_coverage
-BL-001,Core Access Management,Fundamental user access provisioning and identity verification,Optimized,95%
-BL-002,Segregation of Duties,Prevent conflicts of interest through role separation,Managed,88%
-BL-003,Access Certification,Regular access reviews and certification cycles,Defined,82%
-BL-004,Emergency Access,Urgent access procedures for emergency situations,Managed,75%
-BL-005,Privileged Access Management,Control over administrative and privileged accounts,Optimized,92%
-BL-006,User Lifecycle Management,Complete user access from hire to terminate,Managed,85%
-BL-007,System Access Monitoring,Real-time monitoring and alerting of access events,Defined,78%
-BL-008,Data Classification,Classification and handling of sensitive data,Initial,65%
-BL-009,Multi-Factor Authentication,Strong authentication for critical systems,Optimized,98%
-BL-010,Password Management,Secure password policies and management,Managed,87%
-BL-011,Application Access Control,Access control for business applications,Defined,80%
-BL-012,Database Access Control,Database access and privilege management,Managed,83%
-BL-013,Network Access Control,Network segmentation and access control,Defined,76%
-BL-014,Cloud Access Management,Cloud service access and identity management,Initial,70%
-BL-015,Remote Access Control,Secure remote access policies and controls,Managed,81%
-BL-016,Third-Party Access,Access control for vendors and partners,Defined,72%
-BL-017,Access Review Workflow,Formalized access review and approval process,Managed,85%
-BL-018,Access Violation Monitoring,Detection and response to access violations,Defined,68%
-BL-019,Compliance Reporting,Access control compliance reporting,Initial,60%
-BL-020,Risk Assessment,Access-related risk assessment and mitigation,Defined,74%
+baseline_id,baseline_name,description,maturity_level,control_coverage,enforcing_policy,sop_reference
+BL-001,Core Access Management,Fundamental user access provisioning and identity verification,Optimized,95%,Global Information Security Policy v4.0,SOP-SEC-001: User Access Provisioning
+BL-002,Segregation of Duties,Prevent conflicts of interest through role separation,Managed,88%,Corporate Governance Policy v3.2,SOP-GRC-042: SoD Enforcement
+BL-003,Access Certification,Regular access reviews and certification cycles,Defined,82%,SOX Compliance Framework v2.1,SOP-COM-015: Access Certification
+BL-004,Emergency Access,Urgent access procedures for emergency situations,Managed,75%,Business Continuity Policy v2.0,SOP-OPS-008: Emergency Access Procedures
+BL-005,Privileged Access Management,Control over administrative and privileged accounts,Optimized,92%,Global Information Security Policy v4.0,SOP-SEC-023: Privileged Account Management
+BL-006,User Lifecycle Management,Complete user access from hire to terminate,Managed,85%,HR Information Security Policy v1.8,SOP-HR-012: User Lifecycle Management
+BL-007,System Access Monitoring,Real-time monitoring and alerting of access events,Defined,78%,Security Operations Center Policy v1.5,SOP-SEC-034: Access Monitoring
+BL-008,Data Classification,Classification and handling of sensitive data,Initial,65%,Data Governance Policy v3.0,SOP-DG-007: Data Classification
+BL-009,Multi-Factor Authentication,Strong authentication for critical systems,Optimized,98%,Global Information Security Policy v4.0,SOP-SEC-019: MFA Implementation
+BL-010,Password Management,Secure password policies and management,Managed,87%,Global Information Security Policy v4.0,SOP-SEC-011: Password Management
+BL-011,Application Access Control,Access control for business applications,Defined,80%,Application Security Policy v2.3,SOP-SEC-028: Application Access Control
+BL-012,Database Access Control,Database access and privilege management,Managed,83%,Data Governance Policy v3.0,SOP-DG-015: Database Access Management
+BL-013,Network Access Control,Network segmentation and access control,Defined,76%,Network Security Policy v2.1,SOP-SEC-025: Network Access Control
+BL-014,Cloud Access Management,Cloud service access and identity management,Initial,70%,Cloud Security Policy v1.7,SOP-CLOUD-009: Cloud Access Management
+BL-015,Remote Access Control,Secure remote access policies and controls,Managed,81%,Global Information Security Policy v4.0,SOP-SEC-017: Remote Access Control
+BL-016,Third-Party Access,Access control for vendors and partners,Defined,72%,Vendor Management Policy v2.4,SOP-VND-006: Third-Party Access
+BL-017,Access Review Workflow,Formalized access review and approval process,Managed,85%,SOX Compliance Framework v2.1,SOP-COM-022: Access Review Process
+BL-018,Access Violation Monitoring,Detection and response to access violations,Defined,68%,Security Incident Response Policy v1.9,SOP-SEC-031: Access Violation Response
+BL-019,Compliance Reporting,Access control compliance reporting,Initial,60%,Corporate Compliance Policy v2.8,SOP-COM-018: Compliance Reporting
+BL-020,Risk Assessment,Access-related risk assessment and mitigation,Defined,74%,Enterprise Risk Management Policy v3.1,SOP-RISK-012: Access Risk Assessment

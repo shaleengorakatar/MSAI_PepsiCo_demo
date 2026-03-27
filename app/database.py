@@ -52,6 +52,8 @@ def create_tables():
                 description TEXT,
                 maturity_level TEXT,
                 control_coverage TEXT,
+                enforcing_policy TEXT,
+                sop_reference TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -241,7 +243,9 @@ def seed_baselines():
                     "baseline_name": row["baseline_name"],
                     "description": row["description"],
                     "maturity_level": row["maturity_level"],
-                    "control_coverage": row["control_coverage"]
+                    "control_coverage": row["control_coverage"],
+                    "enforcing_policy": row.get("enforcing_policy", ""),
+                    "sop_reference": row.get("sop_reference", "")
                 })
         print(f"✅ Loaded {len(baselines_data)} baselines from CSV")
     except FileNotFoundError:
@@ -256,10 +260,10 @@ def seed_baselines():
         for baseline in baselines_data:
             # Simple INSERT OR REPLACE like Glencore approach
             cur.execute("""
-                INSERT OR REPLACE INTO baselines (baseline_id, baseline_name, description, maturity_level, control_coverage)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO baselines (baseline_id, baseline_name, description, maturity_level, control_coverage, enforcing_policy, sop_reference)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (baseline["baseline_id"], baseline["baseline_name"], baseline["description"], 
-                  baseline["maturity_level"], baseline["control_coverage"]))
+                  baseline["maturity_level"], baseline["control_coverage"], baseline["enforcing_policy"], baseline["sop_reference"]))
         
         conn.commit()
         print("✅ Baselines seeded successfully")
