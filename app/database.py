@@ -44,6 +44,7 @@ def create_tables():
         return False
     
     try:
+        # First create the tables with executescript
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS baselines (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,17 +58,6 @@ def create_tables():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
-
-            -- Add new columns to existing tables if they don't exist (safe migration)
-            try:
-                cur.execute("ALTER TABLE baselines ADD COLUMN enforcing_policy TEXT")
-            except sqlite3.OperationalError:
-                pass  # Column already exists
-            
-            try:
-                cur.execute("ALTER TABLE baselines ADD COLUMN sop_reference TEXT")
-            except sqlite3.OperationalError:
-                pass  # Column already exists
 
             CREATE TABLE IF NOT EXISTS tools (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -223,6 +213,28 @@ def create_tables():
                 FOREIGN KEY (variation_id) REFERENCES market_variations(id) ON DELETE CASCADE
             );
         """)
+        
+        # Then handle migrations for existing tables
+        cur = conn.cursor()
+        
+        # Add new columns to existing tables if they don't exist (safe migration)
+        try:
+            cur.execute("ALTER TABLE baselines ADD COLUMN enforcing_policy TEXT")
+            print("✅ Added enforcing_policy column to baselines table")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e):
+                print("✅ enforcing_policy column already exists")
+            else:
+                raise e
+        
+        try:
+            cur.execute("ALTER TABLE baselines ADD COLUMN sop_reference TEXT")
+            print("✅ Added sop_reference column to baselines table")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e):
+                print("✅ sop_reference column already exists")
+            else:
+                raise e
         
         conn.commit()
         print("✅ Tables created successfully")
