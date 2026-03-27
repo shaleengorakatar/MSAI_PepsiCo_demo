@@ -26,17 +26,12 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-# ---------------------------------------------------------------------------
-# CORS – allow requests from the Lovable frontend and local dev
-# ---------------------------------------------------------------------------
-# More permissive CORS for development and Lovable
+# ADD THIS IMMEDIATELY AFTER app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_origins=["*"],
+    allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"]
 )
 
 # ---------------------------------------------------------------------------
