@@ -14,7 +14,146 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Prompt for /analyze-source
+# Prompt for AI-powered form prefill
+# ---------------------------------------------------------------------------
+PREFILL_SYSTEM_PROMPT = """You are a GRC (Governance, Risk & Compliance) expert assistant. 
+Extract structured form fields from an analysis result. For baselines: provide a concise name, 
+description, and version. For variations: focus on what makes this specific market different 
+from a global standard — identify additional steps, market-specific risks, and suggested 
+overrides to baseline steps. Be specific and actionable using the actual process details 
+from the analysis.
+
+Return JSON based on the mode:
+
+If mode is "baseline":
+{
+  "baseline_name": "string - concise professional name",
+  "baseline_description": "string - 1-2 sentence summary",
+  "version": "1.0"
+}
+
+If mode is "variation":
+{
+  "notes": "string - summary of market-specific deviations",
+  "additional_steps": [
+    {
+      "title": "string",
+      "description": "string", 
+      "responsible_role": "string",
+      "is_mandatory": boolean
+    }
+  ],
+  "additional_risks": [
+    {
+      "description": "string",
+      "severity": "low|medium|high|critical",
+      "mitigating_controls": "string"
+    }
+  ],
+  "suggested_overrides": [
+    {
+      "step_keyword": "string",
+      "field": "title|description|responsible_role",
+      "value": "string",
+      "reason": "string"
+    }
+  ]
+}
+
+Rules:
+- Use actual process details from the analysis
+- Be specific and actionable
+- For variations, focus on market-specific differences
+- Return ONLY valid JSON.
+"""
+
+# ---------------------------------------------------------------------------
+# Prompt for AI-powered security triage
+# ---------------------------------------------------------------------------
+TRIAGE_SYSTEM_PROMPT = """You are a cybersecurity analyst specializing in GRC threat 
+assessment. Analyze the provided anomaly data and produce a structured triage report. 
+Classify the threat, assess risk, identify indicators of compromise, and recommend 
+specific remediation actions. Consider regulatory implications (SOX, GDPR, ISO 27001).
+
+Return JSON:
+{
+  "classification": "string - threat category",
+  "confidence": number (0-1),
+  "risk_score": number (0-100),
+  "summary": "string - brief analysis summary",
+  "recommended_actions": ["string"],
+  "affected_systems": ["string"],
+  "ioc_indicators": ["string - indicators of compromise"],
+  "regulatory_impact": "string - potential compliance implications"
+}
+
+Rules:
+- Assess risk based on severity and potential impact
+- Identify specific indicators of compromise
+- Recommend actionable remediation steps
+- Consider regulatory compliance implications
+- Return ONLY valid JSON.
+"""
+
+# ---------------------------------------------------------------------------
+# Enhanced prompt for source analysis
+# ---------------------------------------------------------------------------
+ENHANCED_ANALYSIS_PROMPT = """You are a GRC expert analyzing interview transcripts and 
+documents for process mapping. Extract structured process steps, identify risks and controls, 
+flag inefficiencies, and note compliance observations. Strip noise like timestamps and 
+[inaudible] markers. Reconstruct processes described out of sequence. Identify risks from 
+conversational cues like hedging ('I think') or complaints ('we struggle with'). Flag 
+inconsistencies when multiple perspectives describe the same process differently.
+
+Return JSON:
+{
+  "process_steps": [
+    {
+      "step_number": number,
+      "title": "string",
+      "description": "string",
+      "responsible_role": "string",
+      "is_mandatory": boolean
+    }
+  ],
+  "risks": [
+    {
+      "description": "string",
+      "severity": "low|medium|high|critical",
+      "mitigating_controls": ["string"],
+      "related_step_numbers": [number]
+    }
+  ],
+  "controls": [
+    {
+      "name": "string",
+      "description": "string",
+      "control_type": "preventive|detective|corrective",
+      "frequency": "string",
+      "risk_ids": ["string"]
+    }
+  ],
+  "inefficiencies": ["string - process gaps or improvement opportunities"],
+  "compliance_observations": ["string - regulatory alignment notes"],
+  "metadata": {
+    "interviewee_role": "string",
+    "department": "string", 
+    "region": "string",
+    "confidence_score": number
+  }
+}
+
+Rules:
+- Standardize step names into clear, action-oriented titles
+- Identify ALL risks, even implicit ones
+- Flag bottlenecks, redundancies, and manual overhead
+- Capture speaker/role information from transcripts
+- Reconstruct logical process sequence
+- Return ONLY valid JSON.
+"""
+
+# ---------------------------------------------------------------------------
+# Prompt for /analyze-source (existing)
 # ---------------------------------------------------------------------------
 SYSTEM_PROMPT = """You are a Control Design Assessment expert. Analyze the provided text 
 and extract the following in JSON.
@@ -383,3 +522,42 @@ async def generate_implementation_plan(
     )
 
     return await _call_llm(IMPLEMENTATION_PLAN_PROMPT, user_content)
+
+
+# ---------------------------------------------------------------------------
+# New AI-powered functions
+# ---------------------------------------------------------------------------
+
+async def generate_form_prefill(mode: str, analysis: Dict[str, Any], context: str = None) -> Dict[str, Any]:
+    """Generate pre-filled form fields for baseline or variation creation."""
+    logger.info("Generating form prefill for mode: %s", mode)
+    
+    user_content = f"Mode: {mode}\n"
+    if context:
+        user_content += f"Context: {context}\n"
+    user_content += f"\n--- ANALYSIS DATA ---\n{json.dumps(analysis, default=str)}"
+    
+    return await _call_llm(PREFILL_SYSTEM_PROMPT, user_content)
+
+
+async def perform_security_triage(anomaly: Dict[str, Any], context: str = None) -> Dict[str, Any]:
+    """Perform AI-powered security triage analysis on detected anomaly."""
+    logger.info("Performing security triage on anomaly: %s", anomaly.get('type', 'unknown'))
+    
+    user_content = f"Anomaly: {json.dumps(anomaly, default=str)}\n"
+    if context:
+        user_content += f"Context: {context}\n"
+    
+    return await _call_llm(TRIAGE_SYSTEM_PROMPT, user_content)
+
+
+async def analyze_source_enhanced(text: str, language: str = "en", context: str = None) -> Dict[str, Any]:
+    """Enhanced source analysis using the new structured prompt."""
+    logger.info("Performing enhanced source analysis in language: %s", language)
+    
+    user_content = f"Source language: {language}\n"
+    if context:
+        user_content += f"Context: {context}\n"
+    user_content += f"\n--- SOURCE TEXT ---\n{text}"
+    
+    return await _call_llm(ENHANCED_ANALYSIS_PROMPT, user_content)

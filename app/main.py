@@ -10,16 +10,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import analyze, baselines, database_api, fit_gap, global_local, monitoring, transcript_analysis, upload, visualizations
+from app.routers import analyze, ai_endpoints, baselines, database_api, fit_gap, global_local, monitoring, transcript_analysis, upload, visualizations
 
 app = FastAPI(
     title="Control Design Assessment API",
     description=(
         "Backend API for the Control Design Assessment tool. "
         "Provides AI-powered process analysis, global/local control management, "
-        "fit-gap analysis, and predictive risk monitoring."
+        "fit-gap analysis, predictive risk monitoring, and advanced AI endpoints "
+        "including form prefilling, security triage, and enhanced source analysis."
     ),
-    version="1.0.1",
+    version="1.0.2",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -44,6 +45,7 @@ app.add_middleware(
 # Routers
 # ---------------------------------------------------------------------------
 app.include_router(analyze.router, prefix="/api")
+app.include_router(ai_endpoints.router)
 app.include_router(upload.router, prefix="/api")
 app.include_router(global_local.router, prefix="/api")
 app.include_router(fit_gap.router, prefix="/api")
