@@ -15,6 +15,7 @@ from app.services.llm_service import (
     generate_form_prefill,
     perform_security_triage,
     analyze_source_enhanced,
+    generate_complete_baseline,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,11 @@ class AnalyzeSourceRequest(BaseModel):
     text: str = Field(..., description="Full transcript or document text")
     language: str = Field("en", description="Language code")
     context: Optional[str] = Field(None, description="Context information")
+
+class GenerateBaselineRequest(BaseModel):
+    name: str = Field(..., description="Baseline name")
+    description: Optional[str] = Field(None, description="Optional context/description")
+    industry: str = Field("FMCG", description="Industry type")
 
 # ---------------------------------------------------------------------------
 # Helper Functions
@@ -215,6 +221,59 @@ async def analyze_source(
         )
 
 
+@router.post(
+    "/generate-baseline",
+    summary="Generate complete GRC baseline",
+    description="Uses AI to generate a complete baseline with process steps, risks, and controls.",
+)
+async def generate_baseline(
+    request: GenerateBaselineRequest,
+    http_request: Request,
+    _: None = Depends(validate_llm_api_key)
+):
+    """
+    Generate a complete GRC baseline using AI with structured output.
+    
+    - **name**: Baseline name
+    - **description**: Optional context/description
+    - **industry**: Industry type (defaults to FMCG)
+    """
+    try:
+        log_ai_call("generate-baseline", request.model_dump())
+        
+        # Validate input
+        if not request.name or len(request.name.strip()) < 3:
+            raise HTTPException(
+                status_code=400,
+                detail="Baseline name must be at least 3 characters long"
+            )
+        
+        # Validate industry
+        valid_industries = ["FMCG", "Banking", "Healthcare", "Technology", "Manufacturing", "Retail", "Energy", "Telecommunications"]
+        if request.industry not in valid_industries:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid industry. Supported: {', '.join(valid_industries)}"
+            )
+        
+        # Call LLM service
+        result = await generate_complete_baseline(
+            name=request.name,
+            description=request.description,
+            industry=request.industry
+        )
+        
+        logger.info(f"Successfully generated baseline: {request.name}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in generate-baseline endpoint: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate baseline: {str(e)}"
+        )
+
+
 @router.get(
     "/status",
     summary="Check AI service status",
@@ -225,7 +284,7 @@ async def ai_status():
     try:
         from app.config import settings
         
-        status = {
+        return {
             "service": "AI-Powered GRC Endpoints",
             "status": "healthy",
             "llm_provider": settings.llm_provider,
@@ -236,6 +295,7 @@ async def ai_status():
                 "prefill": "POST /api/ai/prefill",
                 "triage": "POST /api/ai/triage", 
                 "analyze-source": "POST /api/ai/analyze-source",
+                "generate-baseline": "POST /api/ai/generate-baseline",
                 "status": "GET /api/ai/status"
             }
         }

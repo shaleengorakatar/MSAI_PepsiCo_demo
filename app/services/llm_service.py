@@ -561,3 +561,135 @@ async def analyze_source_enhanced(text: str, language: str = "en", context: str 
     user_content += f"\n--- SOURCE TEXT ---\n{text}"
     
     return await _call_llm(ENHANCED_ANALYSIS_PROMPT, user_content)
+
+
+# ---------------------------------------------------------------------------
+# Prompt for AI baseline generation
+# ---------------------------------------------------------------------------
+BASELINE_GENERATION_PROMPT = """You are a senior GRC (Governance, Risk & Compliance) architect specializing in internal controls frameworks for Fortune 500 companies. Given a baseline name and optional description, generate a complete Global Baseline with:
+
+1. A refined professional description (1-2 sentences)
+2. 5-8 sequential process steps, each with: title, description, responsible_role, is_mandatory (boolean)
+3. 3-5 risks associated with these steps, each with: description, severity (low/medium/high/critical), likelihood (low/medium/high), related_step_numbers (array of step indices 1-based)
+4. 3-5 controls to mitigate the risks, each with: title, description, type (preventive/detective/corrective), frequency (daily/weekly/monthly/quarterly/annually), related_risk_numbers (array of risk indices 1-based)
+
+Rules:
+- Steps should follow a logical process flow (initiation → execution → review → closure)
+- Each risk must reference at least one step
+- Each control must reference at least one risk
+- Use industry-standard GRC terminology
+- Be specific and actionable, not generic
+
+Return the structured JSON directly as the response body."""
+
+
+async def generate_complete_baseline(name: str, description: str = None, industry: str = "FMCG") -> Dict[str, Any]:
+    """Generate a complete GRC baseline using AI with structured output."""
+    logger.info(f"Generating complete baseline for: {name}")
+    
+    user_content = f"Baseline Name: {name}\n"
+    user_content += f"Industry: {industry}\n"
+    if description:
+        user_content += f"Description: {description}\n"
+    
+    # Use OpenAI with function calling for structured output
+    try:
+        from app.config import settings
+        
+        if settings.llm_provider.lower() == "anthropic":
+            # For Anthropic, use regular JSON mode
+            return await _call_llm(BASELINE_GENERATION_PROMPT, user_content)
+        else:
+            # For OpenAI, use function calling
+            return await _call_openai_function_calling(name, description, industry)
+            
+    except Exception as e:
+        logger.error(f"Error generating baseline: {e}")
+        raise
+
+
+async def _call_openai_function_calling(name: str, description: str = None, industry: str = "FMCG") -> Dict[str, Any]:
+    """Use OpenAI function calling for structured baseline generation."""
+    from openai import AsyncOpenAI
+    from app.config import settings
+    
+    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    
+    # Define the function schema
+    functions = [
+        {
+            "name": "generate_baseline",
+            "description": "Generate a complete GRC baseline with process steps, risks, and controls",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "description": {"type": "string"},
+                    "process_steps": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {"type": "string"},
+                                "description": {"type": "string"},
+                                "responsible_role": {"type": "string"},
+                                "is_mandatory": {"type": "boolean"}
+                            },
+                            "required": ["title", "description", "responsible_role", "is_mandatory"]
+                        }
+                    },
+                    "risks": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "description": {"type": "string"},
+                                "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+                                "likelihood": {"type": "string", "enum": ["low", "medium", "high"]},
+                                "related_step_numbers": {"type": "array", "items": {"type": "integer"}}
+                            },
+                            "required": ["description", "severity", "likelihood", "related_step_numbers"]
+                        }
+                    },
+                    "controls": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {"type": "string"},
+                                "description": {"type": "string"},
+                                "type": {"type": "string", "enum": ["preventive", "detective", "corrective"]},
+                                "frequency": {"type": "string", "enum": ["daily", "weekly", "monthly", "quarterly", "annually"]},
+                                "related_risk_numbers": {"type": "array", "items": {"type": "integer"}}
+                            },
+                            "required": ["title", "description", "type", "frequency", "related_risk_numbers"]
+                        }
+                    }
+                },
+                "required": ["description", "process_steps", "risks", "controls"]
+            }
+        }
+    ]
+    
+    user_content = f"Generate a complete GRC baseline for: {name}\n"
+    user_content += f"Industry: {industry}\n"
+    if description:
+        user_content += f"Context: {description}\n"
+    
+    response = await client.chat.completions.create(
+        model=settings.openai_model,
+        messages=[
+            {"role": "system", "content": BASELINE_GENERATION_PROMPT},
+            {"role": "user", "content": user_content}
+        ],
+        functions=functions,
+        function_call={"name": "generate_baseline"},
+        temperature=0.2
+    )
+    
+    # Extract the function call result
+    message = response.choices[0].message
+    if message.function_call:
+        function_args = json.loads(message.function_call.arguments)
+        return function_args
+    else:
+        raise ValueError("No function call in response")
