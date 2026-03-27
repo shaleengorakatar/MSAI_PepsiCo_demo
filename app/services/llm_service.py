@@ -566,31 +566,35 @@ async def analyze_source_enhanced(text: str, language: str = "en", context: str 
 # ---------------------------------------------------------------------------
 # Prompt for AI baseline generation
 # ---------------------------------------------------------------------------
-BASELINE_GENERATION_PROMPT = """You are a senior GRC (Governance, Risk & Compliance) architect specializing in internal controls frameworks for Fortune 500 companies. Given a baseline name and optional description, generate a complete Global Baseline with:
+BASELINE_GENERATION_PROMPT = """You are an expert GRC (Governance, Risk & Compliance) architect specializing in enterprise control frameworks for multinational corporations like PepsiCo.
 
-1. A refined professional description (1-2 sentences)
-2. 5-8 sequential process steps, each with: title, description, responsible_role, is_mandatory (boolean)
-3. 3-5 risks associated with these steps, each with: description, severity (low/medium/high/critical), likelihood (low/medium/high), related_step_numbers (array of step indices 1-based)
-4. 3-5 controls to mitigate the risks, each with: title, description, type (preventive/detective/corrective), frequency (daily/weekly/monthly/quarterly/annually), related_risk_numbers (array of risk indices 1-based)
+When given a baseline name and optional description, generate a complete, professional GRC baseline definition including:
 
-Rules:
-- Steps should follow a logical process flow (initiation → execution → review → closure)
-- Each risk must reference at least one step
-- Each control must reference at least one risk
-- Use industry-standard GRC terminology
-- Be specific and actionable, not generic
+1. A refined description (if not provided or to improve the existing one)
+2. An enforcing policy name — the overarching corporate governance policy that mandates this baseline (e.g., "Global Information Security Policy v4.0"). Only provide this if you are confident it maps to a real, well-known policy framework. If unsure, return an empty string "".
+3. An SOP reference code — the standard operating procedure document reference (e.g., "SOP-SEC-001: User Access Provisioning"). Only provide this if you can derive a realistic, industry-standard SOP reference. If unsure, return an empty string "".
+4. Process steps (4-8 steps) with titles, descriptions, responsible roles, and mandatory flags
+5. Risks (3-6 risks) with descriptions, severity levels, and mitigating controls
+6. Controls (3-6 controls) with names, descriptions, types (Automated/Manual/Hybrid), frequencies, and which risks they mitigate
 
-Return the structured JSON directly as the response body."""
+CRITICAL RULES:
+- Use real-world GRC terminology only. Do NOT invent fake policy names, SOP codes, or control frameworks.
+- If you cannot confidently determine the enforcing policy or SOP reference from the baseline name, return an empty string "" for that field. Never fabricate governance references.
+- Severities must be one of: low, medium, high, critical
+- Control frequencies must be one of: Daily, Weekly, Monthly, Quarterly, Annual, Continuous, On-Demand
+- All descriptions should be professional, concise, and actionable
+- Process steps should reflect real enterprise GRC workflows
+- Risks should be realistic threats, not hypothetical edge cases
+- Controls should map to recognized control frameworks (NIST, ISO 27001, COBIT, SOX) where applicable"""
 
 
-async def generate_complete_baseline(name: str, description: str = None, industry: str = "FMCG") -> Dict[str, Any]:
+async def generate_complete_baseline(name: str, description: str = None) -> Dict[str, Any]:
     """Generate a complete GRC baseline using AI with structured output."""
     logger.info(f"Generating complete baseline for: {name}")
     
-    user_content = f"Baseline Name: {name}\n"
-    user_content += f"Industry: {industry}\n"
-    if description:
-        user_content += f"Description: {description}\n"
+    user_content = f"Generate a complete GRC baseline for:\n"
+    user_content += f"Name: {name}\n"
+    user_content += f"Description: {description if description else 'No description provided - infer from the name.'}\n"
     
     # Use OpenAI with function calling for structured output
     try:
@@ -601,14 +605,14 @@ async def generate_complete_baseline(name: str, description: str = None, industr
             return await _call_llm(BASELINE_GENERATION_PROMPT, user_content)
         else:
             # For OpenAI, use function calling
-            return await _call_openai_function_calling(name, description, industry)
+            return await _call_openai_function_calling(name, description)
             
     except Exception as e:
         logger.error(f"Error generating baseline: {e}")
         raise
 
 
-async def _call_openai_function_calling(name: str, description: str = None, industry: str = "FMCG") -> Dict[str, Any]:
+async def _call_openai_function_calling(name: str, description: str = None) -> Dict[str, Any]:
     """Use OpenAI function calling for structured baseline generation."""
     from openai import AsyncOpenAI
     from app.config import settings
@@ -619,11 +623,22 @@ async def _call_openai_function_calling(name: str, description: str = None, indu
     functions = [
         {
             "name": "generate_baseline",
-            "description": "Generate a complete GRC baseline with process steps, risks, and controls",
+            "description": "Generate a complete GRC baseline with steps, risks, and controls",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "description": {"type": "string"},
+                    "description": {
+                        "type": "string",
+                        "description": "Refined baseline description"
+                    },
+                    "enforcing_policy": {
+                        "type": "string",
+                        "description": "Corporate governance policy name with version (e.g. 'Global Information Security Policy v4.0'). Empty string if uncertain."
+                    },
+                    "sop_reference": {
+                        "type": "string",
+                        "description": "Standard Operating Procedure reference code (e.g. 'SOP-SEC-001: User Access Provisioning'). Empty string if uncertain."
+                    },
                     "process_steps": {
                         "type": "array",
                         "items": {
@@ -634,7 +649,8 @@ async def _call_openai_function_calling(name: str, description: str = None, indu
                                 "responsible_role": {"type": "string"},
                                 "is_mandatory": {"type": "boolean"}
                             },
-                            "required": ["title", "description", "responsible_role", "is_mandatory"]
+                            "required": ["title", "description", "responsible_role", "is_mandatory"],
+                            "additionalProperties": False
                         }
                     },
                     "risks": {
@@ -644,10 +660,13 @@ async def _call_openai_function_calling(name: str, description: str = None, indu
                             "properties": {
                                 "description": {"type": "string"},
                                 "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
-                                "likelihood": {"type": "string", "enum": ["low", "medium", "high"]},
-                                "related_step_numbers": {"type": "array", "items": {"type": "integer"}}
+                                "mitigating_controls": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                }
                             },
-                            "required": ["description", "severity", "likelihood", "related_step_numbers"]
+                            "required": ["description", "severity", "mitigating_controls"],
+                            "additionalProperties": False
                         }
                     },
                     "controls": {
@@ -655,25 +674,30 @@ async def _call_openai_function_calling(name: str, description: str = None, indu
                         "items": {
                             "type": "object",
                             "properties": {
-                                "title": {"type": "string"},
+                                "name": {"type": "string"},
                                 "description": {"type": "string"},
-                                "type": {"type": "string", "enum": ["preventive", "detective", "corrective"]},
-                                "frequency": {"type": "string", "enum": ["daily", "weekly", "monthly", "quarterly", "annually"]},
-                                "related_risk_numbers": {"type": "array", "items": {"type": "integer"}}
+                                "control_type": {"type": "string", "enum": ["Automated", "Manual", "Hybrid"]},
+                                "frequency": {"type": "string"},
+                                "mitigates_risks": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "Descriptions of risks this control mitigates"
+                                }
                             },
-                            "required": ["title", "description", "type", "frequency", "related_risk_numbers"]
+                            "required": ["name", "description", "control_type", "frequency", "mitigates_risks"],
+                            "additionalProperties": False
                         }
                     }
                 },
-                "required": ["description", "process_steps", "risks", "controls"]
+                "required": ["description", "enforcing_policy", "sop_reference", "process_steps", "risks", "controls"],
+                "additionalProperties": False
             }
         }
     ]
     
-    user_content = f"Generate a complete GRC baseline for: {name}\n"
-    user_content += f"Industry: {industry}\n"
-    if description:
-        user_content += f"Context: {description}\n"
+    user_content = f"Generate a complete GRC baseline for:\n"
+    user_content += f"Name: {name}\n"
+    user_content += f"Description: {description if description else 'No description provided - infer from the name.'}\n"
     
     response = await client.chat.completions.create(
         model=settings.openai_model,

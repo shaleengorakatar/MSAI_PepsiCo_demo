@@ -43,7 +43,6 @@ class AnalyzeSourceRequest(BaseModel):
 class GenerateBaselineRequest(BaseModel):
     name: str = Field(..., description="Baseline name")
     description: Optional[str] = Field(None, description="Optional context/description")
-    industry: str = Field("FMCG", description="Industry type")
 
 # ---------------------------------------------------------------------------
 # Helper Functions
@@ -236,7 +235,6 @@ async def generate_baseline(
     
     - **name**: Baseline name
     - **description**: Optional context/description
-    - **industry**: Industry type (defaults to FMCG)
     """
     try:
         log_ai_call("generate-baseline", request.model_dump())
@@ -248,19 +246,10 @@ async def generate_baseline(
                 detail="Baseline name must be at least 3 characters long"
             )
         
-        # Validate industry
-        valid_industries = ["FMCG", "Banking", "Healthcare", "Technology", "Manufacturing", "Retail", "Energy", "Telecommunications"]
-        if request.industry not in valid_industries:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid industry. Supported: {', '.join(valid_industries)}"
-            )
-        
         # Call LLM service
         result = await generate_complete_baseline(
             name=request.name,
-            description=request.description,
-            industry=request.industry
+            description=request.description
         )
         
         logger.info(f"Successfully generated baseline: {request.name}")
