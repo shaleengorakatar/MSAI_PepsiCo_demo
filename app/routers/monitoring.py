@@ -101,71 +101,115 @@ async def classify_activity(activity: Dict[str, Any]) -> Dict[str, Any]:
 @router.get("/stats")
 async def get_monitoring_stats() -> Dict[str, Any]:
     """Get monitoring statistics for dashboard."""
-    # Calculate stats from logs
-    total_logs = len(ai_activity_logs)
-    recent_logs = [log for log in ai_activity_logs if 
-                   datetime.fromisoformat(log["timestamp"].replace("Z", "+00:00")) > 
-                   datetime.utcnow() - timedelta(hours=24)]
-    
-    high_risk_count = len([log for log in recent_logs if log["risk_score"] > 0.7])
-    medium_risk_count = len([log for log in recent_logs if 0.4 < log["risk_score"] <= 0.7])
-    low_risk_count = len(recent_logs) - high_risk_count - medium_risk_count
-    
-    # Agent activity breakdown
-    agent_activity = {}
-    for log in recent_logs:
-        agent = log["agent"]
-        agent_activity[agent] = agent_activity.get(agent, 0) + 1
-    
-    return {
-        "total_activities": total_logs,
-        "recent_24h": len(recent_logs),
-        "risk_distribution": {
-            "high": high_risk_count,
-            "medium": medium_risk_count, 
-            "low": low_risk_count
-        },
-        "agent_activity": agent_activity,
-        "avg_risk_score": round(sum(log["risk_score"] for log in recent_logs) / len(recent_logs), 2) if recent_logs else 0,
-        "generated_at": datetime.utcnow().isoformat() + "Z"
-    }
+    try:
+        # Calculate stats from logs
+        total_logs = len(ai_activity_logs)
+        recent_logs = []
+        
+        for log in ai_activity_logs:
+            try:
+                # Safe datetime parsing
+                timestamp_str = log["timestamp"].replace("Z", "+00:00")
+                log_time = datetime.fromisoformat(timestamp_str)
+                if log_time > datetime.utcnow() - timedelta(hours=24):
+                    recent_logs.append(log)
+            except Exception as e:
+                logger.warning(f"Skipping invalid timestamp in log: {e}")
+                continue
+        
+        high_risk_count = len([log for log in recent_logs if log["risk_score"] > 0.7])
+        medium_risk_count = len([log for log in recent_logs if 0.4 < log["risk_score"] <= 0.7])
+        low_risk_count = len(recent_logs) - high_risk_count - medium_risk_count
+        
+        # Agent activity breakdown
+        agent_activity = {}
+        for log in recent_logs:
+            agent = log["agent"]
+            agent_activity[agent] = agent_activity.get(agent, 0) + 1
+        
+        avg_risk_score = round(sum(log["risk_score"] for log in recent_logs) / len(recent_logs), 2) if recent_logs else 0
+        
+        return {
+            "total_activities": total_logs,
+            "recent_24h": len(recent_logs),
+            "risk_distribution": {
+                "high": high_risk_count,
+                "medium": medium_risk_count, 
+                "low": low_risk_count
+            },
+            "agent_activity": agent_activity,
+            "avg_risk_score": avg_risk_score,
+            "generated_at": datetime.utcnow().isoformat() + "Z"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in get_monitoring_stats: {e}")
+        # Return safe default values
+        return {
+            "total_activities": 0,
+            "recent_24h": 0,
+            "risk_distribution": {"high": 0, "medium": 0, "low": 0},
+            "agent_activity": {},
+            "avg_risk_score": 0.0,
+            "generated_at": datetime.utcnow().isoformat() + "Z",
+            "error": str(e)
+        }
 
 
 @router.get("/stats/history")
 async def get_stats_history(hours: int = 24) -> Dict[str, Any]:
     """Get historical monitoring statistics."""
-    # Generate hourly stats for the past N hours
-    history = []
-    current_time = datetime.utcnow()
-    
-    for i in range(hours):
-        hour_time = current_time - timedelta(hours=i)
-        hour_start = hour_time.replace(minute=0, second=0, microsecond=0)
-        hour_end = hour_start + timedelta(hours=1)
+    try:
+        # Generate hourly stats for the past N hours
+        history = []
+        current_time = datetime.utcnow()
         
-        # Count logs in this hour
-        hour_logs = [log for log in ai_activity_logs if 
-                    hour_start <= datetime.fromisoformat(log["timestamp"].replace("Z", "+00:00")) < hour_end]
+        for i in range(hours):
+            hour_time = current_time - timedelta(hours=i)
+            hour_start = hour_time.replace(minute=0, second=0, microsecond=0)
+            hour_end = hour_start + timedelta(hours=1)
+            
+            # Count logs in this hour with safe datetime parsing
+            hour_logs = []
+            for log in ai_activity_logs:
+                try:
+                    timestamp_str = log["timestamp"].replace("Z", "+00:00")
+                    log_time = datetime.fromisoformat(timestamp_str)
+                    if hour_start <= log_time < hour_end:
+                        hour_logs.append(log)
+                except (ValueError, KeyError) as e:
+                    logger.warning(f"Skipping invalid timestamp in history log: {e}")
+                    continue
+            
+            if hour_logs:
+                avg_risk = sum(log["risk_score"] for log in hour_logs) / len(hour_logs)
+                high_risk = len([log for log in hour_logs if log["risk_score"] > 0.7])
+            else:
+                avg_risk = 0
+                high_risk = 0
+            
+            history.append({
+                "timestamp": hour_start.isoformat() + "Z",
+                "activity_count": len(hour_logs),
+                "avg_risk_score": round(avg_risk, 2),
+                "high_risk_count": high_risk
+            })
         
-        if hour_logs:
-            avg_risk = sum(log["risk_score"] for log in hour_logs) / len(hour_logs)
-            high_risk = len([log for log in hour_logs if log["risk_score"] > 0.7])
-        else:
-            avg_risk = 0
-            high_risk = 0
+        return {
+            "history": list(reversed(history)),  # Most recent first
+            "period_hours": hours,
+            "generated_at": datetime.utcnow().isoformat() + "Z"
+        }
         
-        history.append({
-            "timestamp": hour_start.isoformat() + "Z",
-            "activity_count": len(hour_logs),
-            "avg_risk_score": round(avg_risk, 2),
-            "high_risk_count": high_risk
-        })
-    
-    return {
-        "history": list(reversed(history)),  # Most recent first
-        "period_hours": hours,
-        "generated_at": datetime.utcnow().isoformat() + "Z"
-    }
+    except Exception as e:
+        logger.error(f"Error in get_stats_history: {e}")
+        # Return safe default values
+        return {
+            "history": [],
+            "period_hours": hours,
+            "generated_at": datetime.utcnow().isoformat() + "Z",
+            "error": str(e)
+        }
 
 
 @router.post(
