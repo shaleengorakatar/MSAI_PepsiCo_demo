@@ -10,9 +10,6 @@ from typing import Dict, Any, Optional
 
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel, Field
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
 
 from app.services.llm_service import (
     generate_form_prefill,
@@ -22,11 +19,7 @@ from app.services.llm_service import (
 
 logger = logging.getLogger(__name__)
 
-# Rate limiting setup
-limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(prefix="/api/ai", tags=["AI-Powered Endpoints"])
-router.state.limiter = limiter
-router.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ---------------------------------------------------------------------------
 # Pydantic Models
@@ -76,7 +69,6 @@ def log_ai_call(endpoint: str, request_data: Dict[str, Any]):
     summary="Pre-fill form fields for baseline or variation creation",
     description="Uses AI to extract structured form fields from analysis results.",
 )
-@limiter.limit("10/minute")
 async def prefill_form(
     request: PrefillRequest,
     http_request: Request,
@@ -130,7 +122,6 @@ async def prefill_form(
     summary="Perform AI-powered security triage",
     description="Analyzes detected anomalies and provides structured triage reports.",
 )
-@limiter.limit("10/minute")
 async def security_triage(
     request: TriageRequest,
     http_request: Request,
@@ -176,7 +167,6 @@ async def security_triage(
     summary="Enhanced source analysis with AI",
     description="Extract structured GRC data from interview transcripts or documents.",
 )
-@limiter.limit("10/minute")
 async def analyze_source(
     request: AnalyzeSourceRequest,
     http_request: Request,
