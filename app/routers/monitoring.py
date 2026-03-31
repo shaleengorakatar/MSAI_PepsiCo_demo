@@ -43,13 +43,22 @@ async def get_ai_logs(limit: int = 50) -> Dict[str, Any]:
     
     # Generate new logs if we don't have enough
     while len(ai_activity_logs) < limit:
+        # More realistic risk distribution - mostly low risk
+        risk_score = round(random.choices(
+            [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
+            weights=[40, 25, 15, 10, 5, 3, 1, 1]  # Most activities are low risk
+        )[0], 2)
+        
+        # Status based on risk score - only high risk triggers warnings
+        status = "warning" if risk_score > 0.6 else "success"
+        
         log_entry = {
             "id": len(ai_activity_logs) + 1,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "agent": random.choice(AI_AGENTS),
             "action": random.choice(ACTIONS),
-            "risk_score": round(random.uniform(0.1, 0.8), 2),
-            "status": "success" if random.random() > 0.1 else "warning",
+            "risk_score": risk_score,
+            "status": status,
             "details": f"AI agent performed {random.choice(ACTIONS).lower()} operation"
         }
         ai_activity_logs.append(log_entry)
